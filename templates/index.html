@@ -1,183 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>PlaniPet Service</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            background: #f8f9fc;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        h1, h2 {
-            text-align: center;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        table {
-            width: 80%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        thead {
-            background-color: #f2f3f8;
-        }
-
-        th {
-            font-weight: 600;
-            color: #6c757d;
-        }
-
-        tr {
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background-color: #f9fbff;
-        }
-
-        .btn {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn:hover {
-            background-color: #1e40af;
-        }
-
-        .file-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        input[type="file"] {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        input[type="file"]::-webkit-file-upload-button {
-            visibility: hidden;
-        }
-
-        input[type="file"]::before {
-            content: 'Choose File';
-            display: inline-block;
-            background: #2563eb;
-            color: white;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        input[type="file"]:hover::before {
-            background-color: #1e40af;
-        }
-
-        .file-name {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #374151;
-            font-weight: 500;
-            background: #e0e7ff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            max-width: 300px;
-            word-break: break-word;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-    <h1>PlaniPet Service</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <div class="file-wrapper">
-            <input type="file" name="file" id="file-input" onchange="showFileName()">
-            <div class="file-name" id="file-name" style="display:none;"></div>
+    <button class="settings-button btn" onclick="toggleSettings()">⚙️ Settings</button>
+
+    <div class="settings-panel" id="settingsPanel">
+        <h3>Settings</h3>
+        <div class="toggle-switch">
+            
         </div>
-        <input type="submit" value="Import" class='btn' style="margin-top: 10px;">
+    </div>
+
+    <h1>PlaniPet Service</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="file-upload">
+            <label for="file-input" class="file-label">📂 Choose File</label>
+            <input type="file" name="file" id="file-input" onchange="showFileNameAndButton()" />
+            <div class="file-name" id="file-name" style="display: none;"></div>
+            <input type="submit" value="Import" class="btn" id="import-btn" style="display: none;" />
+        </div>
     </form>
+
     <h2>Service List</h2>
+    <!-- Service List Dynamic Content (e.g. using a templating engine like Jinja or your server-side logic) -->
     {% if items %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Ville</th>
-                    <th>Quartier</th>
-                    <th>Metier</th>
-                    <th>Animal</th>
-                    <th>Specificite</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                    <tr>
-                        <td>{{ item['ville'] }}</td>
-                        <td>{{ item['quartier'] }}</td>
-                        <td>{{ item['metier'] }}</td>
-                        <td>{{ item['animal'] }}</td>
-                        <td>{{ item['specificite'] }}</td>
-                        <td>
-                            <form method="GET" action="/item/{{ loop.index0 }}">
-                                <button class="btn" type="submit">Open</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <table>
+        <thead>
+            <tr>
+                <th>Ville</th>
+                <th>Quartier</th>
+                <th>Metier</th>
+                <th>Animal</th>
+                <th>Specificite</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item['ville'] }}</td>
+                <td>{{ item['quartier'] }}</td>
+                <td>{{ item['metier'] }}</td>
+                <td>{{ item['animal'] }}</td>
+                <td>{{ item['specificite'] }}</td>
+                <td>
+                    <form method="GET" action="/item/{{ loop.index0 }}">
+                        <button class="btn" type="submit">Open</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% else %}
-        <p>No valid items found in the CSV.</p>
+    <p>No valid items found in the CSV.</p>
     {% endif %}
 
     <script>
-        function showFileName() {
-            const fileInput = document.getElementById('file-input');
-            const fileName = document.getElementById('file-name');
+        function showFileNameAndButton() {
+            const fileInput = document.getElementById("file-input");
+            const fileName = document.getElementById("file-name");
+            const importBtn = document.getElementById("import-btn");
+
             if (fileInput.files.length > 0) {
                 fileName.textContent = fileInput.files[0].name;
-                fileName.style.display = 'block';
+                fileName.style.display = "block";
+                importBtn.style.display = "inline-block";
             } else {
-                fileName.style.display = 'none';
+                fileName.style.display = "none";
+                importBtn.style.display = "none";
             }
         }
+
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            panel.style.display = panel.style.display === "block" ? "none" : "block";
+        }
+
+        window.onload = function () {
+            const darkModeSetting = localStorage.getItem("darkMode");
+            const toggle = document.getElementById("darkModeToggle");
+            if (darkModeSetting === "enabled" || darkModeSetting === null) {
+                document.body.classList.add("dark-mode");  // Default to dark mode
+                toggle.checked = true;
+            } else {
+                document.body.classList.remove("dark-mode");
+                toggle.checked = false;
+            }
+        };
     </script>
 </body>
+
 </html>

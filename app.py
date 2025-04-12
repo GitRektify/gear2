@@ -36,7 +36,7 @@ def upload_file():
                     # if not row['quartier'] or row['ville'].lower() in ['smalltown1', 'smalltown2']:
                     #     continue
                     items.append(row)
-    return render_template('index.html', items=items)
+    return render_template('index.html', items=items, prompt_config = prompt_config)
 
 
 @app.route('/item/<int:item_id>')
