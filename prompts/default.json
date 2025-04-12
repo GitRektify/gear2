@@ -1,0 +1,3 @@
+{
+    "template": "Write an SEO-friendly page for a {{animal}} looking for {{metier}} in {{quartier}}, {{ville}}. Include sections with H2 headings, a catchy intro, CTA, and a FAQ. Include internal links to nearby neighborhoods: {{lien_action}}."
+}

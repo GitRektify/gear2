@@ -1,0 +1,56 @@
+body {
+    font-family: sans-serif;
+    background: #f8f9fc;
+    padding: 20px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    white-space: nowrap;
+}
+thead {
+    background-color: #f2f3f8;
+}
+th {
+    font-weight: 600;
+    color: #6c757d;
+}
+tr {
+    border-bottom: 1px solid #eee;
+}
+tr:hover {
+    background-color: #f9fbff;
+}
+.highlight {
+    background-color: #edf2ff;
+}
+.btn {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn:hover {
+    background-color: #1e40af;
+}
+.edit-icon {
+    color: #3b82f6;
+    text-decoration: none;
+    margin-left: 5px;
+    font-size: 14px;
+}
+.ip-icon {
+    margin-right: 4px;
+    color: #10b981;
+}
