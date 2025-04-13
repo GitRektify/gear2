@@ -21,10 +21,10 @@
                 <label><strong>Keys</strong></label>
                 <ul id="keyList" style="list-style: none; padding: 0; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;"></ul>
 
-                <!-- Buttons below the list -->
-                <div style="margin-top: 10px;">
+                <!-- Buttons in same line -->
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
                     <button class="btn" onclick="addNewKey()">➕ New Key</button>
-                    <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()" style="margin-left: 5px;">🗑️ Delete</button>
+                    <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">🗑️ Delete</button>
                 </div>
             </div>
 
@@ -43,10 +43,8 @@
             </div>
         </div>
 
-        <!-- Cancel Button at bottom right -->
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
-        </div>
+        <!-- Cancel Button at top right -->
+        <button class="btn" onclick="cancelSettings()" style="position: absolute; top: 10px; right: 10px;">❌ Cancel</button>
     </div>
 
     <h1>PlaniPets Service</h1>
