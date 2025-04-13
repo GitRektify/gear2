@@ -285,3 +285,18 @@ table {
 .kv-modal-buttons .btn {
     margin-left: 10px;
 }
+
+.key-item {
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.key-item:hover {
+    background-color: #f0f0f0;
+}
+
+.key-item.active {
+    background-color: #d0eaff;
+    font-weight: bold;
+}

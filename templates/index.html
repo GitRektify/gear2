@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <title>Gear2</title>
@@ -11,25 +10,19 @@
     <img src="https://planipets.com/images/logo.png" alt="">
 
     <div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
-
     <button class="settings-button btn" onclick="toggleSettings()">⚙️ Settings</button>
 
     <div class="settings-panel" id="settingsPanel" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Settings</h3>
-            <div>
-                <button class="btn" id="saveBtn" onclick="saveSelectedKV()" disabled>💾 Save</button>
-                <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
-                <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">🗑️ Delete</button>
-            </div>
+            <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">🗑️ Delete</button>
         </div>
 
         <div style="display: flex; margin-top: 20px; gap: 20px;">
-            <!-- Left: Key Select -->
+            <!-- Left: Key List -->
             <div style="flex: 1;">
-                <button class="btn" style="width: 100%; margin-bottom: 10px;" onclick="addNewKey()">➕ Add</button>
-                <label for="keySelect"><strong>Key</strong></label><br>
-                <select id="keySelect" onchange="onKeyChange()" style="width: 100%;"></select>
+                <label><strong>Keys</strong></label>
+                <ul id="keyList" style="list-style: none; padding: 0;"></ul>
             </div>
 
             <!-- Right: Edit Fields -->
@@ -38,8 +31,14 @@
                 <input type="text" id="editKey" style="width: 100%; margin-bottom: 10px;" />
 
                 <label><strong>Value</strong></label>
-                <textarea id="editValue" rows="6" style="width: 100%;"></textarea>
+                <textarea id="editValue" rows="6" style="width: 100%; height: 50%"></textarea>
             </div>
+        </div>
+
+        <!-- Save/Cancel at bottom -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px;">
+            <button class="btn" id="saveBtn" onclick="saveSelectedKV()" disabled>💾 Save</button>
+            <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
         </div>
     </div>
 
@@ -77,10 +76,8 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <button class="btn prompt-btn" type="button"
-                            onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
-                        <select class="prompt-select" style="display: none;"
-                            onchange="setPromptKey(this, {{ loop.index0 }})"></select>
+                        <button class="btn prompt-btn" type="button" onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
+                        <select class="prompt-select" style="display: none;" onchange="setPromptKey(this, {{ loop.index0 }})"></select>
                     </div>
                 </td>
                 <td>
@@ -97,25 +94,10 @@
     <p>No valid items found in the CSV.</p>
     {% endif %}
 
-    <!-- Modal for Adding/Editing KV -->
-    <div class="kv-modal" id="kvModal">
-        <h4 id="kvModalTitle">Add/Edit Setting</h4>
-        <label for="kvKey">Key:</label>
-        <textarea id="kvKey" rows="3"></textarea>
-
-        <label for="kvValue">Value:</label>
-        <input type="text" id="kvValue" />
-
-        <div class="kv-modal-buttons">
-            <button class="btn" onclick="saveModalKV()">💾 Save</button>
-            <button class="btn" onclick="closeModal()">❌ Cancel</button>
-        </div>
-    </div>
-
     <script>
         let selectedPromptKeys = {};
         let kvStore = {{ prompt_config | tojson }};
-        let originalKVStore = JSON.parse(JSON.stringify(kvStore)); // Deep copy
+        let originalKVStore = JSON.parse(JSON.stringify(kvStore));
         let selectedKey = null;
 
         function toggleSettings() {
@@ -125,12 +107,10 @@
 
             if (!isVisible) {
                 resetFormToOriginal();
-                populateKeySelect();
+                populateKeyList();
                 const keys = Object.keys(kvStore);
                 if (keys.length > 0) {
                     loadKeyValue(keys[0]);
-                } else {
-                    addNewKey();
                 }
             }
 
@@ -144,40 +124,44 @@
             document.getElementById("saveBtn").disabled = true;
         }
 
-        function populateKeySelect() {
-            const select = document.getElementById("keySelect");
-            select.innerHTML = "";
-            Object.keys(kvStore).forEach(key => {
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = key;
-                select.appendChild(option);
-            });
-        }
+        function populateKeyList() {
+            const list = document.getElementById("keyList");
+            list.innerHTML = "";
 
-        function onKeyChange() {
-            const selected = document.getElementById("keySelect").value;
-            loadKeyValue(selected);
+            Object.keys(kvStore).forEach(key => {
+                const li = document.createElement("li");
+                li.textContent = key;
+                li.className = "key-item";
+                li.onclick = () => loadKeyValue(key);
+                if (key === selectedKey) li.classList.add("active");
+                list.appendChild(li);
+            });
+
+            const newLi = document.createElement("li");
+            newLi.textContent = "➕ New Key";
+            newLi.className = "key-item new-key";
+            newLi.onclick = () => addNewKey();
+            list.appendChild(newLi);
         }
 
         function loadKeyValue(key) {
             selectedKey = key;
+            const value = kvStore[key];
             document.getElementById("editKey").value = key;
-            document.getElementById("editValue").value = kvStore[key];
+            document.getElementById("editValue").value = value;
+            document.getElementById("saveBtn").disabled = true;
 
             document.getElementById("editKey").oninput = checkChanges;
             document.getElementById("editValue").oninput = checkChanges;
 
-            checkChanges();
+            populateKeyList();
         }
 
         function checkChanges() {
             const newKey = document.getElementById("editKey").value;
             const newValue = document.getElementById("editValue").value;
-
             const originalValue = originalKVStore[selectedKey];
             const changed = newKey !== selectedKey || newValue !== originalValue;
-
             document.getElementById("saveBtn").disabled = !changed;
         }
 
@@ -190,7 +174,6 @@
                 return;
             }
 
-            // If adding new and key already exists
             if ((!selectedKey || newKey !== selectedKey) && kvStore.hasOwnProperty(newKey)) {
                 alert("Key already exists.");
                 return;
@@ -210,7 +193,7 @@
                 if (res.ok) {
                     alert("Settings saved!");
                     originalKVStore = JSON.parse(JSON.stringify(kvStore));
-                    populateKeySelect();
+                    populateKeyList();
                     loadKeyValue(newKey);
                 } else {
                     alert("Failed to save settings.");
@@ -227,117 +210,32 @@
             document.getElementById("editKey").value = "";
             document.getElementById("editValue").value = "";
             document.getElementById("saveBtn").disabled = false;
-            document.getElementById("keySelect").selectedIndex = -1;
         }
 
         function deleteCurrentKey() {
             if (selectedKey && confirm(`Are you sure you want to delete "${selectedKey}"?`)) {
                 delete kvStore[selectedKey];
-                populateKeySelect();
-                const firstKey = Object.keys(kvStore)[0];
-                if (firstKey) {
-                    loadKeyValue(firstKey);
-                } else {
-                    addNewKey();
-                }
-                document.getElementById("saveBtn").disabled = false;
+
+                fetch("/save-config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(kvStore)
+                }).then(res => {
+                    if (res.ok) {
+                        originalKVStore = JSON.parse(JSON.stringify(kvStore));
+                        populateKeyList();
+                        const firstKey = Object.keys(kvStore)[0];
+                        if (firstKey) {
+                            loadKeyValue(firstKey);
+                        } else {
+                            addNewKey();
+                        }
+                        document.getElementById("saveBtn").disabled = true;
+                    } else {
+                        alert("Failed to delete and save.");
+                    }
+                });
             }
-        }
-
-        function renderKVList() {
-            const kvList = document.getElementById("kv-list");
-            kvList.innerHTML = "";
-
-            Object.entries(kvStore).forEach(([key, value]) => {
-                const div = document.createElement("div");
-                div.className = "kv-item";
-                div.innerHTML = `
-                    <div class="kv-main">
-                        <div><strong>${key}:</strong> ${value}</div>
-                        <div class="kv-controls">
-                            <button class="btn" onclick="editKV('${key}')">✏️ Edit</button>
-                            <button class="btn" onclick="deleteKV('${key}')">🗑️ Delete</button>
-                        </div>
-                    </div>
-                `;
-                kvList.appendChild(div);
-            });
-        }
-
-        function onKeyChange() {
-            const selected = document.getElementById("keySelect").value;
-            loadKeyValue(selected);
-        }
-
-        function openModal(title, key = '', value = '', isEdit = false) {
-            document.getElementById('kvModalTitle').textContent = title;
-            document.getElementById('kvKey').value = key;
-            document.getElementById('kvValue').value = value;
-            document.getElementById('kvModal').style.display = 'block';
-            editingKey = isEdit ? key : null;
-        }
-
-        function closeModal() {
-            document.getElementById('kvModal').style.display = 'none';
-            editingKey = null;
-        }
-
-        function addNewKV() {
-            openModal('➕ Add New Setting');
-        }
-
-        function editKV(key) {
-            openModal('✏️ Edit Setting', key, kvStore[key], true);
-        }
-
-        function saveModalKV() {
-            const newKey = document.getElementById('kvKey').value.trim();
-            const newValue = document.getElementById('kvValue').value.trim();
-
-            if (!newKey || !newValue) {
-                alert("Both fields are required.");
-                return;
-            }
-
-            if (editingKey && newKey !== editingKey && kvStore.hasOwnProperty(newKey)) {
-                alert("Key already exists.");
-                return;
-            }
-
-            if (!editingKey && kvStore.hasOwnProperty(newKey)) {
-                alert("Key already exists.");
-                return;
-            }
-
-            if (editingKey && newKey !== editingKey) {
-                delete kvStore[editingKey];
-            }
-
-            kvStore[newKey] = newValue;
-            renderKVList();
-            closeModal();
-        }
-
-        function deleteKV(key) {
-            if (confirm("Are you sure you want to delete this item?")) {
-                delete kvStore[key];
-                renderKVList();
-            }
-        }
-
-        function saveSettings() {
-            fetch("/save-config", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(kvStore)
-            }).then(res => {
-                if (res.ok) {
-                    alert("Settings saved!");
-                    toggleSettings();
-                } else {
-                    alert("Failed to save settings.");
-                }
-            });
         }
 
         function showFileNameAndButton() {
@@ -394,5 +292,4 @@
         }
     </script>
 </body>
-
 </html>
