@@ -9,6 +9,8 @@
 </head>
 
 <body>
+    <div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
+
     <button class="settings-button btn" onclick="toggleSettings()">⚙️ Settings</button>
 
     <div class="settings-panel" id="settingsPanel">
@@ -32,7 +34,6 @@
         </div>
     </form>
 
-    <!-- <h2>Service List</h2> -->
     {% if items %}
     <table>
         <thead>
@@ -56,8 +57,10 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <button class="btn prompt-btn" type="button" onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
-                        <select class="prompt-select" style="display: none;" onchange="setPromptKey(this, {{ loop.index0 }})"></select>
+                        <button class="btn prompt-btn" type="button"
+                            onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
+                        <select class="prompt-select" style="display: none;"
+                            onchange="setPromptKey(this, {{ loop.index0 }})"></select>
                     </div>
                 </td>
                 <td>
@@ -76,7 +79,7 @@
 
     <script>
         let kvStore = {{ prompt_config | tojson }};
-        let selectedPromptKeys = {}; // Tracks selected keys per item
+        let selectedPromptKeys = {};
 
         function renderKVList() {
             const kvList = document.getElementById("kv-list");
@@ -85,7 +88,6 @@
             Object.entries(kvStore).forEach(([key, value]) => {
                 const div = document.createElement("div");
                 div.className = "kv-item";
-
                 div.innerHTML = `
                     <div class="kv-main">
                         <div><strong>${key}:</strong> ${value}</div>
@@ -101,8 +103,12 @@
 
         function toggleSettings() {
             const panel = document.getElementById("settingsPanel");
+            const overlay = document.getElementById("settingsOverlay");
             const isVisible = panel.style.display === "block";
+
             panel.style.display = isVisible ? "none" : "block";
+            overlay.style.display = isVisible ? "none" : "block";
+
             if (!isVisible) renderKVList();
         }
 
@@ -177,7 +183,6 @@
             const select = container.querySelector(".prompt-select");
             const button = container.querySelector(".prompt-btn");
 
-            // Clear and repopulate
             select.innerHTML = "";
 
             Object.keys(kvStore).forEach(key => {
@@ -205,7 +210,6 @@
 
             selectedPromptKeys[index] = selectedKey;
 
-            // Set hidden input for backend
             const hiddenInput = document.querySelector(`#prompt-key-${index}`);
             if (hiddenInput) {
                 hiddenInput.value = selectedKey;
