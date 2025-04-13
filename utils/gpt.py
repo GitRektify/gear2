@@ -7,7 +7,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_content(data, prompt_config, internal_links):
-    prompt = prompt_config['template']
+    prompt = prompt_config
 
     # Replace placeholders with actual data
     for key in data:

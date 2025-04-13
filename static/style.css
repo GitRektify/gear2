@@ -1,12 +1,20 @@
 :root {
-    --bg-color: #1b2d1b;
+    --bg-color: #eeeeee;
+    --text-color: #244f24;
+    --accent-color: #26914a;
+    --secondary-color: #ffffff;
+    --header-bg: #26914a;
+    --row-hover: #ffffff;
+    --btn-bg: #26914a;
+    --btn-hover: #244f24;
+    /* --bg-color: #1b2d1b;
     --text-color: #e0f2e9;
     --accent-color: #66bb6a;
     --secondary-color: #2e7d32;
     --header-bg: #244f24;
     --row-hover: #336633;
     --btn-bg: #388e3c;
-    --btn-hover: #2e7d32;
+    --btn-hover: #2e7d32; */
 }
 
 /* Light mode default styles */
@@ -14,7 +22,8 @@ body {
     font-family: 'Segoe UI', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    padding: 20px;
+    padding-left: 150px;
+    padding-right: 150px;
     transition: all 0.3s ease;
 }
 
@@ -24,7 +33,13 @@ body.dark-mode {
     color: var(--text-color);
 }
 
-h1,
+h1 {
+    text-align: center;
+    font-size: 48px; /* Bigger title */
+    color: black;     /* Black color */
+    /* margin-bottom: 30px; */
+}
+
 h2 {
     text-align: center;
 }
@@ -86,8 +101,7 @@ input[type="file"] {
 }
 
 table {
-    width: 80%;
-    margin: 20px auto;
+    width: 70%; /* Reduced from 80% to 70% */
     border-collapse: collapse;
     background: var(--secondary-color);
     border-radius: 10px;
@@ -95,8 +109,15 @@ table {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-th,
+th {
+    font-size: 20px;
+    background-color: var(--header-bg);
+    padding: 20px 15px;
+    color: white; /* Make header row text color black */
+}
+
 td {
+    font-size: 20px;
     padding: 12px 15px;
     text-align: center;
 }
@@ -120,7 +141,7 @@ tr:hover {
 .settings-button {
     position: fixed;
     top: 20px;
-    right: 20px;
+    right: 150px;
     background-color: var(--accent-color);
     color: white;
     padding: 10px 20px;
@@ -153,4 +174,52 @@ tr:hover {
 
 .toggle-switch input {
     margin-right: 10px;
+}
+
+/* .settings-panel {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+} */
+
+.kv-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eee;
+}
+
+.kv-main>div {
+    word-break: break-word;
+    max-width: 450px;
+}
+
+.kv-controls {
+    margin-top: 6px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.file-upload {
+    margin-bottom: 20px;
+}
+
+.file-name {
+    margin-top: 5px;
+    font-style: italic;
 }

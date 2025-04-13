@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import csv, os, json
-from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links
+from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
@@ -10,14 +10,13 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 items = []
-prompt_config = json.load(open('prompts/default.json'))
+config_path = 'prompts/default.json'
+prompt_config = json.load(open(config_path, encoding='utf-8'))
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Is choosed file csv file?
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -25,31 +24,38 @@ def upload_file():
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)   # Ensures that uploaded filenames are safe to use (removes dangerous characters, etc.).
+            filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
-            items.clear()
-            with open(filepath, newline='') as csvfile:
+            with open(filepath, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    # if not row['quartier'] or row['ville'].lower() in ['smalltown1', 'smalltown2']:
-                    #     continue
                     items.append(row)
-    return render_template('index.html', items=items, prompt_config = prompt_config)
 
+    return render_template('index.html', items=items, prompt_config=prompt_config)
 
-@app.route('/item/<int:item_id>')
+@app.route('/item/<int:item_id>', methods=['POST'])
 def open_item(item_id):
-    # Load the CSV file again, or better — store the parsed items globally if already loaded
     item = items[item_id]
+    prompt_key = request.form.get("prompt_key", "default")
+    if prompt_key == 'default':
+        prompt_key = 'template'
     slug = create_slug(item)
     internal_links = get_internal_links(item)
-    content = generate_content(item, prompt_config, internal_links)
+    content = generate_content(item, prompt_config[prompt_key], internal_links)
+    content = md_to_html(content)
     resultUrl = publish_to_wordpress(content, slug)
-    # return redirect(resultUrl)
     return redirect(resultUrl)
 
+@app.route('/save-config', methods=['POST'])
+def save_config():
+    data = request.get_json()
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    global prompt_config
+    prompt_config = data
+    return jsonify({"status": "success"})
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>PlaniPet Service</title>
+    <title>Gear2</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <img src="https://planipets.com/images/logo.png" alt="">
 </head>
 
 <body>
@@ -12,24 +13,26 @@
 
     <div class="settings-panel" id="settingsPanel">
         <h3>Settings</h3>
-        <div class="toggle-switch">
-            
+        <div id="kv-list"></div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn" onclick="addNewKV()">➕ New</button>
+            <button class="btn" onclick="saveSettings()">💾 Save</button>
+            <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
         </div>
     </div>
 
-    <h1>PlaniPet Service</h1>
+    <h1>PlaniPets Service</h1>
 
     <form method="POST" enctype="multipart/form-data">
         <div class="file-upload">
-            <label for="file-input" class="file-label">📂 Choose File</label>
+            <label for="file-input" class="file-label">📂 Choose CSV File</label>
             <input type="file" name="file" id="file-input" onchange="showFileNameAndButton()" />
             <div class="file-name" id="file-name" style="display: none;"></div>
-            <input type="submit" value="Import" class="btn" id="import-btn" style="display: none;" />
+            <input type="submit" value="Start" class="btn" id="import-btn" style="display: none;" />
         </div>
     </form>
 
-    <h2>Service List</h2>
-    <!-- Service List Dynamic Content (e.g. using a templating engine like Jinja or your server-side logic) -->
+    <!-- <h2>Service List</h2> -->
     {% if items %}
     <table>
         <thead>
@@ -39,6 +42,7 @@
                 <th>Metier</th>
                 <th>Animal</th>
                 <th>Specificite</th>
+                <th>Prompts</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -51,7 +55,14 @@
                 <td>{{ item['animal'] }}</td>
                 <td>{{ item['specificite'] }}</td>
                 <td>
-                    <form method="GET" action="/item/{{ loop.index0 }}">
+                    <div class="prompt-dropdown-container">
+                        <button class="btn prompt-btn" type="button" onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
+                        <select class="prompt-select" style="display: none;" onchange="setPromptKey(this, {{ loop.index0 }})"></select>
+                    </div>
+                </td>
+                <td>
+                    <form method="POST" action="/item/{{ loop.index0 }}">
+                        <input type="hidden" name="prompt_key" id="prompt-key-{{ loop.index0 }}" value="default">
                         <button class="btn" type="submit">Open</button>
                     </form>
                 </td>
@@ -64,6 +75,88 @@
     {% endif %}
 
     <script>
+        let kvStore = {{ prompt_config | tojson }};
+        let selectedPromptKeys = {}; // Tracks selected keys per item
+
+        function renderKVList() {
+            const kvList = document.getElementById("kv-list");
+            kvList.innerHTML = "";
+
+            Object.entries(kvStore).forEach(([key, value]) => {
+                const div = document.createElement("div");
+                div.className = "kv-item";
+
+                div.innerHTML = `
+                    <div class="kv-main">
+                        <div><strong>${key}:</strong> ${value}</div>
+                        <div class="kv-controls">
+                            <button class="btn" onclick="editKV('${key}')">✏️ Edit</button>
+                            <button class="btn" onclick="deleteKV('${key}')">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+                kvList.appendChild(div);
+            });
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            const isVisible = panel.style.display === "block";
+            panel.style.display = isVisible ? "none" : "block";
+            if (!isVisible) renderKVList();
+        }
+
+        function addNewKV() {
+            const key = prompt("New Key:");
+            const value = prompt("New Value:");
+            if (!key || !value) return;
+            if (kvStore.hasOwnProperty(key)) {
+                alert("This key already exists.");
+                return;
+            }
+            kvStore[key] = value;
+            renderKVList();
+        }
+
+        function editKV(key) {
+            const newKey = prompt("Edit Key:", key);
+            const newValue = prompt("Edit Value:", kvStore[key]);
+            if (!newKey || !newValue) return;
+            if (newKey !== key && kvStore.hasOwnProperty(newKey)) {
+                alert("Key already exists.");
+                return;
+            }
+            delete kvStore[key];
+            kvStore[newKey] = newValue;
+            renderKVList();
+        }
+
+        function deleteKV(key) {
+            if (confirm("Are you sure you want to delete this item?")) {
+                delete kvStore[key];
+                renderKVList();
+            }
+        }
+
+        function saveSettings() {
+            fetch("/save-config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(kvStore)
+            }).then(res => {
+                if (res.ok) {
+                    alert("Settings saved!");
+                    toggleSettings();
+                } else {
+                    alert("Failed to save settings.");
+                }
+            });
+        }
+
+        function cancelSettings() {
+            toggleSettings();
+        }
+
         function showFileNameAndButton() {
             const fileInput = document.getElementById("file-input");
             const fileName = document.getElementById("file-name");
@@ -79,22 +172,45 @@
             }
         }
 
-        function toggleSettings() {
-            const panel = document.getElementById("settingsPanel");
-            panel.style.display = panel.style.display === "block" ? "none" : "block";
+        function showPromptOptions(event, index) {
+            const container = event.target.closest(".prompt-dropdown-container");
+            const select = container.querySelector(".prompt-select");
+            const button = container.querySelector(".prompt-btn");
+
+            // Clear and repopulate
+            select.innerHTML = "";
+
+            Object.keys(kvStore).forEach(key => {
+                const option = document.createElement("option");
+                option.value = key;
+                option.textContent = key;
+                if (selectedPromptKeys[index] === key) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            select.style.display = "inline-block";
+            button.style.display = "none";
         }
 
-        window.onload = function () {
-            const darkModeSetting = localStorage.getItem("darkMode");
-            const toggle = document.getElementById("darkModeToggle");
-            if (darkModeSetting === "enabled" || darkModeSetting === null) {
-                document.body.classList.add("dark-mode");  // Default to dark mode
-                toggle.checked = true;
-            } else {
-                document.body.classList.remove("dark-mode");
-                toggle.checked = false;
+        function setPromptKey(selectEl, index) {
+            const selectedKey = selectEl.value;
+            const container = selectEl.closest(".prompt-dropdown-container");
+            const button = container.querySelector(".prompt-btn");
+
+            button.textContent = selectedKey;
+            button.style.display = "inline-block";
+            selectEl.style.display = "none";
+
+            selectedPromptKeys[index] = selectedKey;
+
+            // Set hidden input for backend
+            const hiddenInput = document.querySelector(`#prompt-key-${index}`);
+            if (hiddenInput) {
+                hiddenInput.value = selectedKey;
             }
-        };
+        }
     </script>
 </body>
 
