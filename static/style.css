@@ -246,3 +246,42 @@ table {
 .prompt-select {
     margin-top: 5px;
 }
+
+.kv-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    z-index: 1001;
+    display: none;
+    width: 400px;
+    max-width: 90%;
+}
+
+.kv-modal h4 {
+    margin-top: 0;
+}
+
+.kv-modal textarea,
+.kv-modal input[type="text"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.kv-modal-buttons {
+    text-align: right;
+}
+
+.kv-modal-buttons .btn {
+    margin-left: 10px;
+}

@@ -5,21 +5,41 @@
     <meta charset="UTF-8" />
     <title>Gear2</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <img src="https://planipets.com/images/logo.png" alt="">
 </head>
 
 <body>
+    <img src="https://planipets.com/images/logo.png" alt="">
+
     <div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
 
     <button class="settings-button btn" onclick="toggleSettings()">⚙️ Settings</button>
 
-    <div class="settings-panel" id="settingsPanel">
-        <h3>Settings</h3>
-        <div id="kv-list"></div>
-        <div style="text-align: right; margin-top: 20px;">
-            <button class="btn" onclick="addNewKV()">➕ New</button>
-            <button class="btn" onclick="saveSettings()">💾 Save</button>
-            <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
+    <div class="settings-panel" id="settingsPanel" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Settings</h3>
+            <div>
+                <button class="btn" id="saveBtn" onclick="saveSelectedKV()" disabled>💾 Save</button>
+                <button class="btn" onclick="cancelSettings()">❌ Cancel</button>
+                <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">🗑️ Delete</button>
+            </div>
+        </div>
+
+        <div style="display: flex; margin-top: 20px; gap: 20px;">
+            <!-- Left: Key Select -->
+            <div style="flex: 1;">
+                <button class="btn" style="width: 100%; margin-bottom: 10px;" onclick="addNewKey()">➕ Add</button>
+                <label for="keySelect"><strong>Key</strong></label><br>
+                <select id="keySelect" onchange="onKeyChange()" style="width: 100%;"></select>
+            </div>
+
+            <!-- Right: Edit Fields -->
+            <div style="flex: 3;">
+                <label><strong>Key Name</strong></label>
+                <input type="text" id="editKey" style="width: 100%; margin-bottom: 10px;" />
+
+                <label><strong>Value</strong></label>
+                <textarea id="editValue" rows="6" style="width: 100%;"></textarea>
+            </div>
         </div>
     </div>
 
@@ -77,9 +97,152 @@
     <p>No valid items found in the CSV.</p>
     {% endif %}
 
+    <!-- Modal for Adding/Editing KV -->
+    <div class="kv-modal" id="kvModal">
+        <h4 id="kvModalTitle">Add/Edit Setting</h4>
+        <label for="kvKey">Key:</label>
+        <textarea id="kvKey" rows="3"></textarea>
+
+        <label for="kvValue">Value:</label>
+        <input type="text" id="kvValue" />
+
+        <div class="kv-modal-buttons">
+            <button class="btn" onclick="saveModalKV()">💾 Save</button>
+            <button class="btn" onclick="closeModal()">❌ Cancel</button>
+        </div>
+    </div>
+
     <script>
-        let kvStore = {{ prompt_config | tojson }};
         let selectedPromptKeys = {};
+        let kvStore = {{ prompt_config | tojson }};
+        let originalKVStore = JSON.parse(JSON.stringify(kvStore)); // Deep copy
+        let selectedKey = null;
+
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            const overlay = document.getElementById("settingsOverlay");
+            const isVisible = panel.style.display === "block";
+
+            if (!isVisible) {
+                resetFormToOriginal();
+                populateKeySelect();
+                const keys = Object.keys(kvStore);
+                if (keys.length > 0) {
+                    loadKeyValue(keys[0]);
+                } else {
+                    addNewKey();
+                }
+            }
+
+            panel.style.display = isVisible ? "none" : "block";
+            overlay.style.display = isVisible ? "none" : "block";
+        }
+
+        function resetFormToOriginal() {
+            kvStore = JSON.parse(JSON.stringify(originalKVStore));
+            selectedKey = null;
+            document.getElementById("saveBtn").disabled = true;
+        }
+
+        function populateKeySelect() {
+            const select = document.getElementById("keySelect");
+            select.innerHTML = "";
+            Object.keys(kvStore).forEach(key => {
+                const option = document.createElement("option");
+                option.value = key;
+                option.textContent = key;
+                select.appendChild(option);
+            });
+        }
+
+        function onKeyChange() {
+            const selected = document.getElementById("keySelect").value;
+            loadKeyValue(selected);
+        }
+
+        function loadKeyValue(key) {
+            selectedKey = key;
+            document.getElementById("editKey").value = key;
+            document.getElementById("editValue").value = kvStore[key];
+
+            document.getElementById("editKey").oninput = checkChanges;
+            document.getElementById("editValue").oninput = checkChanges;
+
+            checkChanges();
+        }
+
+        function checkChanges() {
+            const newKey = document.getElementById("editKey").value;
+            const newValue = document.getElementById("editValue").value;
+
+            const originalValue = originalKVStore[selectedKey];
+            const changed = newKey !== selectedKey || newValue !== originalValue;
+
+            document.getElementById("saveBtn").disabled = !changed;
+        }
+
+        function saveSelectedKV() {
+            const newKey = document.getElementById("editKey").value.trim();
+            const newValue = document.getElementById("editValue").value.trim();
+
+            if (!newKey || !newValue) {
+                alert("Both fields are required.");
+                return;
+            }
+
+            // If adding new and key already exists
+            if ((!selectedKey || newKey !== selectedKey) && kvStore.hasOwnProperty(newKey)) {
+                alert("Key already exists.");
+                return;
+            }
+
+            if (newKey !== selectedKey && selectedKey !== null) {
+                delete kvStore[selectedKey];
+            }
+
+            kvStore[newKey] = newValue;
+
+            fetch("/save-config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(kvStore)
+            }).then(res => {
+                if (res.ok) {
+                    alert("Settings saved!");
+                    originalKVStore = JSON.parse(JSON.stringify(kvStore));
+                    populateKeySelect();
+                    loadKeyValue(newKey);
+                } else {
+                    alert("Failed to save settings.");
+                }
+            });
+        }
+
+        function cancelSettings() {
+            toggleSettings();
+        }
+
+        function addNewKey() {
+            selectedKey = null;
+            document.getElementById("editKey").value = "";
+            document.getElementById("editValue").value = "";
+            document.getElementById("saveBtn").disabled = false;
+            document.getElementById("keySelect").selectedIndex = -1;
+        }
+
+        function deleteCurrentKey() {
+            if (selectedKey && confirm(`Are you sure you want to delete "${selectedKey}"?`)) {
+                delete kvStore[selectedKey];
+                populateKeySelect();
+                const firstKey = Object.keys(kvStore)[0];
+                if (firstKey) {
+                    loadKeyValue(firstKey);
+                } else {
+                    addNewKey();
+                }
+                document.getElementById("saveBtn").disabled = false;
+            }
+        }
 
         function renderKVList() {
             const kvList = document.getElementById("kv-list");
@@ -101,40 +264,58 @@
             });
         }
 
-        function toggleSettings() {
-            const panel = document.getElementById("settingsPanel");
-            const overlay = document.getElementById("settingsOverlay");
-            const isVisible = panel.style.display === "block";
+        function onKeyChange() {
+            const selected = document.getElementById("keySelect").value;
+            loadKeyValue(selected);
+        }
 
-            panel.style.display = isVisible ? "none" : "block";
-            overlay.style.display = isVisible ? "none" : "block";
+        function openModal(title, key = '', value = '', isEdit = false) {
+            document.getElementById('kvModalTitle').textContent = title;
+            document.getElementById('kvKey').value = key;
+            document.getElementById('kvValue').value = value;
+            document.getElementById('kvModal').style.display = 'block';
+            editingKey = isEdit ? key : null;
+        }
 
-            if (!isVisible) renderKVList();
+        function closeModal() {
+            document.getElementById('kvModal').style.display = 'none';
+            editingKey = null;
         }
 
         function addNewKV() {
-            const key = prompt("New Key:");
-            const value = prompt("New Value:");
-            if (!key || !value) return;
-            if (kvStore.hasOwnProperty(key)) {
-                alert("This key already exists.");
-                return;
-            }
-            kvStore[key] = value;
-            renderKVList();
+            openModal('➕ Add New Setting');
         }
 
         function editKV(key) {
-            const newKey = prompt("Edit Key:", key);
-            const newValue = prompt("Edit Value:", kvStore[key]);
-            if (!newKey || !newValue) return;
-            if (newKey !== key && kvStore.hasOwnProperty(newKey)) {
+            openModal('✏️ Edit Setting', key, kvStore[key], true);
+        }
+
+        function saveModalKV() {
+            const newKey = document.getElementById('kvKey').value.trim();
+            const newValue = document.getElementById('kvValue').value.trim();
+
+            if (!newKey || !newValue) {
+                alert("Both fields are required.");
+                return;
+            }
+
+            if (editingKey && newKey !== editingKey && kvStore.hasOwnProperty(newKey)) {
                 alert("Key already exists.");
                 return;
             }
-            delete kvStore[key];
+
+            if (!editingKey && kvStore.hasOwnProperty(newKey)) {
+                alert("Key already exists.");
+                return;
+            }
+
+            if (editingKey && newKey !== editingKey) {
+                delete kvStore[editingKey];
+            }
+
             kvStore[newKey] = newValue;
             renderKVList();
+            closeModal();
         }
 
         function deleteKV(key) {
@@ -157,10 +338,6 @@
                     alert("Failed to save settings.");
                 }
             });
-        }
-
-        function cancelSettings() {
-            toggleSettings();
         }
 
         function showFileNameAndButton() {

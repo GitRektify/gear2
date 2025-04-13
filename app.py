@@ -48,14 +48,15 @@ def open_item(item_id):
     resultUrl = publish_to_wordpress(content, slug)
     return redirect(resultUrl)
 
-@app.route('/save-config', methods=['POST'])
+@app.route("/save-config", methods=["POST"])
 def save_config():
-    data = request.get_json()
-    with open(config_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
     global prompt_config
-    prompt_config = data
-    return jsonify({"status": "success"})
+    prompt_config = request.get_json()
+    # Optionally, persist to file
+    with open("prompt_config.json", "w") as f:
+        json.dump(prompt_config, f)
+    return jsonify({"success": True})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
