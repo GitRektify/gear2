@@ -7,27 +7,17 @@
     --row-hover: #ffffff;
     --btn-bg: #26914a;
     --btn-hover: #244f24;
-    /* --bg-color: #1b2d1b;
-    --text-color: #e0f2e9;
-    --accent-color: #66bb6a;
-    --secondary-color: #2e7d32;
-    --header-bg: #244f24;
-    --row-hover: #336633;
-    --btn-bg: #388e3c;
-    --btn-hover: #2e7d32; */
 }
 
-/* Light mode default styles */
 body {
     font-family: 'Segoe UI', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    padding-left: 150px;
-    padding-right: 150px;
+    padding: 0 5vw;
+    /* Responsive horizontal padding */
     transition: all 0.3s ease;
 }
 
-/* Dark mode styles (when the class is active) */
 body.dark-mode {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -35,9 +25,8 @@ body.dark-mode {
 
 h1 {
     text-align: center;
-    font-size: 48px; /* Bigger title */
-    color: black;     /* Black color */
-    /* margin-bottom: 30px; */
+    font-size: 2.5rem;
+    color: black;
 }
 
 h2 {
@@ -52,38 +41,42 @@ form {
 
 .file-upload {
     display: flex;
-    align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
     justify-content: center;
-}
-
-input[type="file"] {
-    display: none;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .file-label {
     background-color: var(--btn-bg);
     color: white;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 1rem;
+    border: none;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    text-align: center;
 }
 
 .file-label:hover {
     background-color: var(--btn-hover);
 }
 
-.file-name {
-    font-size: 14px;
-    background: var(--header-bg);
-    padding: 6px 12px;
-    border-radius: 6px;
-    max-width: 300px;
-    word-break: break-word;
+input[type="file"] {
+    display: none;
 }
+
+.file-name {
+    font-size: 0.95rem;
+    padding: 8px;
+    text-align: center;
+    color: var(--text-color);
+    display: none;
+}
+
 
 .btn {
     background-color: var(--btn-bg);
@@ -101,23 +94,24 @@ input[type="file"] {
 }
 
 table {
-    width: 70%; /* Reduced from 80% to 70% */
+    width: 100%;
     border-collapse: collapse;
     background: var(--secondary-color);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
 }
 
 th {
-    font-size: 20px;
+    font-size: 1.25rem;
     background-color: var(--header-bg);
-    padding: 20px 15px;
-    color: white; /* Make header row text color black */
+    padding: 1rem;
+    color: white;
 }
 
 td {
-    font-size: 20px;
+    font-size: 1rem;
     padding: 12px 15px;
     text-align: center;
 }
@@ -126,7 +120,7 @@ thead {
     background-color: var(--header-bg);
 }
 
-thead tr:hover{
+thead tr:hover {
     background-color: var(--header-bg);
 }
 
@@ -141,33 +135,36 @@ tr:hover {
 .settings-button {
     position: fixed;
     top: 20px;
-    right: 150px;
+    right: 5vw;
+    /* Responsive right spacing */
     background-color: var(--accent-color);
     color: white;
     padding: 10px 20px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 1rem;
     z-index: 1000;
 }
 
-.settings-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.settings-panel,
+.kv-modal {
     width: 90%;
     max-width: 600px;
+    height: auto;
     max-height: 80vh;
+    overflow-y: auto;
     background: white;
     border: 1px solid #ccc;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     padding: 20px;
-    overflow-y: auto;
+    border-radius: 8px;
     z-index: 1000;
     display: none;
-    border-radius: 8px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .settings-overlay {
@@ -191,21 +188,6 @@ tr:hover {
     margin-right: 10px;
 }
 
-/* .settings-panel {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 600px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    transform: translate(-50%, -50%);
-    padding: 20px;
-    z-index: 1000;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-} */
-
 .kv-item {
     display: flex;
     justify-content: space-between;
@@ -213,30 +195,16 @@ tr:hover {
     margin-bottom: 12px;
     padding-bottom: 6px;
     border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
 }
 
 .kv-main>div {
     word-break: break-word;
-    max-width: 450px;
+    max-width: 100%;
 }
 
 .kv-controls {
     margin-top: 6px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.file-upload {
-    margin-bottom: 20px;
-}
-
-.file-name {
-    margin-top: 5px;
-    font-style: italic;
 }
 
 .prompt-dropdown-container {
@@ -245,28 +213,26 @@ table {
 
 .prompt-select {
     margin-top: 5px;
-}
-
-.kv-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    z-index: 1001;
-    display: none;
-    width: 400px;
-    max-width: 90%;
+    width: 100%;
 }
 
 .kv-modal h4 {
     margin-top: 0;
 }
 
-.kv-modal textarea,
+.kv-modal textarea {
+    border: 1px solid #ccc;
+    /* Light gray border */
+    border-radius: 4px;
+    /* Rounded corners like the list */
+    padding: 8px;
+    /* Some inner spacing */
+    font-family: inherit;
+    /* Match overall font */
+    resize: vertical;
+    /* Allow vertical resizing only (optional) */
+}
+
 .kv-modal input[type="text"] {
     width: 100%;
     margin-bottom: 10px;
@@ -299,4 +265,25 @@ table {
 .key-item.active {
     background-color: #d0eaff;
     font-weight: bold;
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #ccc;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }

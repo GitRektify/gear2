@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import csv, os, json
-from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html
+from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html, delete_existing_page_by_slug
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
@@ -20,8 +20,12 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    items.clear()
+    
     if request.method == 'POST':
+        for item in items:
+            slug = create_slug(item)
+            delete_existing_page_by_slug(slug)
+        items.clear()
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -35,25 +39,38 @@ def upload_file():
 
     return render_template('index.html', items=items, prompt_config=prompt_config)
 
-@app.route('/item/<int:item_id>', methods=['POST'])
-def open_item(item_id):
+@app.route('/generate-item/<int:item_id>', methods=['POST'])
+def generate_item(item_id):
     item = items[item_id]
     prompt_key = request.form.get("prompt_key", "default")
     if prompt_key == 'default':
         prompt_key = 'template'
+
     slug = create_slug(item)
+    print("HHHHHHHHHHHHHHHHHHHHHHHH", slug)
     internal_links = get_internal_links(item)
     content = generate_content(item, prompt_config[prompt_key], internal_links)
     content = md_to_html(content)
+    print('slugggggggggggggggg', slug)
     resultUrl = publish_to_wordpress(content, slug)
-    return redirect(resultUrl)
+    item["wordpress_url"] = resultUrl
+
+    return jsonify({"status": "success", "url": resultUrl})
+
+@app.route('/item/<int:item_id>', methods=['POST'])
+def open_item(item_id):
+    item = items[item_id]
+    resultUrl = item.get("wordpress_url")
+    if not resultUrl:
+        return jsonify({"error": "Not published yet"}), 400
+    return jsonify({"url": resultUrl})
 
 @app.route("/save-config", methods=["POST"])
 def save_config():
     global prompt_config
     prompt_config = request.get_json()
     # Optionally, persist to file
-    with open("prompt_config.json", "w") as f:
+    with open(config_path, "w") as f:
         json.dump(prompt_config, f)
     return jsonify({"success": True})
 

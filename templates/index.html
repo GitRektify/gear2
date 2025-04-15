@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <title>Gear2</title>
@@ -18,33 +19,39 @@
         <div style="display: flex; margin-top: 20px; gap: 20px;">
             <!-- Left: Key List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
-                <label><strong>Keys</strong></label>
-                <ul id="keyList" style="list-style: none; padding: 0; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;"></ul>
+                <!-- <label><strong>Keys</strong></label> -->
+                <ul id="keyList"
+                    style="list-style: none; padding: 0; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
+                </ul>
 
                 <!-- Buttons in same line -->
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
-                    <button class="btn" onclick="addNewKey()">➕ New Key</button>
-                    <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">🗑️ Delete</button>
+                    <button class="btn" onclick="addNewKey()">Add</button>
+                    <button class="btn" id="deleteBtn" onclick="deleteCurrentKey()">Delete</button>
                 </div>
             </div>
 
             <!-- Right: Edit Fields -->
             <div style="flex: 3;">
-                <label><strong>Key Name</strong></label>
-                <input type="text" id="editKey" style="width: 100%; margin-bottom: 10px;" />
+                <label style="margin-left: 10px"><strong>Key Name</strong></label>
+                <input type="text" id="editKey"
+                    style="width: 90%; margin: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 8px;" />
 
-                <label><strong>Value</strong></label>
-                <textarea id="editValue" rows="6" style="width: 100%; height: 150px; resize: none;"></textarea>
+                <label style="margin-left: 10px"><strong>Value</strong></label>
+                <textarea id="editValue" rows="6"
+                    style="width: 90%; margin: 10px; height: 150px; resize: none; border: 1px solid #ccc; border-radius: 4px; padding: 8px;"></textarea>
 
                 <!-- Save Button moved to right -->
-                <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
-                    <button class="btn" id="saveBtn" onclick="saveSelectedKV()" disabled>💾 Save</button>
+                <div style="bottom: 20px; display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <button class="btn" id="saveBtn" onclick="saveSelectedKV()" disabled>Save</button>
+                    <button class="btn" onclick="cancelSettings()" style="margin-left: 10px;">Cancel</button>
                 </div>
             </div>
+
         </div>
 
         <!-- Cancel Button at top right -->
-        <button class="btn" onclick="cancelSettings()" style="position: absolute; top: 10px; right: 10px;">❌ Cancel</button>
+        <!-- <button class="btn" onclick="cancelSettings()" style="position: absolute; top: 10px; right: 10px;">❌ Cancel</button> -->
     </div>
 
     <h1>PlaniPets Service</h1>
@@ -53,10 +60,11 @@
         <div class="file-upload">
             <label for="file-input" class="file-label">📂 Choose CSV File</label>
             <input type="file" name="file" id="file-input" onchange="showFileNameAndButton()" />
-            <div class="file-name" id="file-name" style="display: none;"></div>
-            <input type="submit" value="Start" class="btn" id="import-btn" style="display: none;" />
+            <button type="submit" class="file-label" id="import-btn">▶ Start</button>
         </div>
+        <div class="file-name" id="file-name" style="display: none;"></div>
     </form>
+
 
     {% if items %}
     <table>
@@ -68,6 +76,7 @@
                 <th>Animal</th>
                 <th>Specificite</th>
                 <th>Prompts</th>
+                <th>Status</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -81,20 +90,28 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <button class="btn prompt-btn" type="button" onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
-                        <select class="prompt-select" style="display: none;" onchange="setPromptKey(this, {{ loop.index0 }})"></select>
+                        <button class="btn prompt-btn" type="button"
+                            onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
+                        <select class="prompt-select" style="display: none;"
+                            onchange="setPromptKey(this, {{ loop.index0 }})"></select>
                     </div>
                 </td>
+                <td id="status-{{ loop.index0 }}">
+                    <i class="fas fa-minus-circle text-muted"></i>
+                </td>
                 <td>
-                    <form method="POST" action="/item/{{ loop.index0 }}">
-                        <input type="hidden" name="prompt_key" id="prompt-key-{{ loop.index0 }}" value="default">
-                        <button class="btn" type="submit">Open</button>
-                    </form>
+                    <button class="btn" onclick="openItem({{ loop.index0 }})">Open</button>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    <select id="prompt_key">
+        {% for key in prompt_config %}
+        <option value="{{ key }}">{{ key }}</option>
+        {% endfor %}
+    </select>
+    <button onclick="generateAll()">Generate All</button>
     {% else %}
     <p>No valid items found in the CSV.</p>
     {% endif %}
@@ -144,13 +161,13 @@
                 list.appendChild(li);
             });
 
-            const newLi = document.createElement("li");
-            newLi.textContent = "➕ New Key";
-            newLi.className = "key-item new-key";
-            newLi.onclick = () => addNewKey();
-            newLi.onmouseenter = () => newLi.style.background = "#eee";
-            newLi.onmouseleave = () => newLi.style.background = "";
-            list.appendChild(newLi);
+            // const newLi = document.createElement("li");
+            // newLi.textContent = "➕ New Key";
+            // newLi.className = "key-item new-key";
+            // newLi.onclick = () => addNewKey();
+            // newLi.onmouseenter = () => newLi.style.background = "#eee";
+            // newLi.onmouseleave = () => newLi.style.background = "";
+            // list.appendChild(newLi);
         }
 
         function loadKeyValue(key) {
@@ -249,16 +266,12 @@
 
         function showFileNameAndButton() {
             const fileInput = document.getElementById("file-input");
-            const fileName = document.getElementById("file-name");
-            const importBtn = document.getElementById("import-btn");
-
+            const fileNameDiv = document.getElementById("file-name");
             if (fileInput.files.length > 0) {
-                fileName.textContent = fileInput.files[0].name;
-                fileName.style.display = "block";
-                importBtn.style.display = "inline-block";
+                fileNameDiv.textContent = fileInput.files[0].name;
+                fileNameDiv.style.display = "block";
             } else {
-                fileName.style.display = "none";
-                importBtn.style.display = "none";
+                fileNameDiv.style.display = "none";
             }
         }
 
@@ -299,6 +312,50 @@
                 hiddenInput.value = selectedKey;
             }
         }
+
+        async function generateAll() {
+            const promptKey = document.getElementById("prompt_key").value;
+            const totalItems = {{ items| length
+        }};
+
+        for (let i = 0; i < totalItems; i++) {
+            const statusCell = document.getElementById(`status-${i}`);
+            statusCell.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const res = await fetch(`/generate-item/${i}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ prompt_key: promptKey }),
+                });
+
+                const data = await res.json();
+                if (data.status === 'success') {
+                    statusCell.innerHTML = '✅';
+                } else {
+                    statusCell.innerHTML = '❌';
+                }
+            } catch (error) {
+                statusCell.innerHTML = '❌';
+            }
+        }
+    }
+        function openItem(itemId) {
+            fetch(`/item/${itemId}`, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.url) {
+                        window.open(data.url, '_blank');  // ✅ Open in new tab
+                    } else {
+                        alert('Page not published yet.');
+                    }
+                });
+        }
     </script>
 </body>
+
 </html>
