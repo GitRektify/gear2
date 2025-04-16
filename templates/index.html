@@ -83,10 +83,11 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <button class="btn prompt-btn" type="button"
-                            onclick="showPromptOptions(event, {{ loop.index0 }})">default</button>
-                        <select class="prompt-select" style="display: none;"
-                            onchange="setPromptKey(this, {{ loop.index0 }})"></select>
+                        <select class="prompt-select" onchange="setPromptKey(this, {{ loop.index0 }})">
+                            {% for key in prompt_config %}
+                            <option value="{{ key }}">{{ key }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </td>
                 <td id="status-{{ loop.index0 }}">
@@ -268,36 +269,8 @@
             }
         }
 
-        function showPromptOptions(event, index) {
-            const container = event.target.closest(".prompt-dropdown-container");
-            const select = container.querySelector(".prompt-select");
-            const button = container.querySelector(".prompt-btn");
-
-            select.innerHTML = "";
-
-            Object.keys(kvStore).forEach(key => {
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = key;
-                if (selectedPromptKeys[index] === key) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            });
-
-            select.style.display = "inline-block";
-            button.style.display = "none";
-        }
-
         function setPromptKey(selectEl, index) {
             const selectedKey = selectEl.value;
-            const container = selectEl.closest(".prompt-dropdown-container");
-            const button = container.querySelector(".prompt-btn");
-
-            button.textContent = selectedKey;
-            button.style.display = "inline-block";
-            selectEl.style.display = "none";
-
             selectedPromptKeys[index] = selectedKey;
 
             const hiddenInput = document.querySelector(`#prompt-key-${index}`);
@@ -306,35 +279,36 @@
             }
         }
 
+
         async function generateAll() {
             const promptKey = document.getElementById("prompt_key").value;
-            const totalItems = {{ items| length
-        }};
+            const totalItems = {{ items| length }};
 
-        for (let i = 0; i < totalItems; i++) {
-            const statusCell = document.getElementById(`status-${i}`);
-            statusCell.innerHTML = '<div class="spinner"></div>';
+            for (let i = 0; i < totalItems; i++) {
+                const statusCell = document.getElementById(`status-${i}`);
+                statusCell.innerHTML = '<div class="spinner"></div>';
 
-            try {
-                const res = await fetch(`/generate-item/${i}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({ prompt_key: promptKey }),
-                });
+                try {
+                    const res = await fetch(`/generate-item/${i}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({ prompt_key: promptKey }),
+                    });
 
-                const data = await res.json();
-                if (data.status === 'success') {
-                    statusCell.innerHTML = '✅';
-                } else {
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        statusCell.innerHTML = '✅';
+                    } else {
+                        statusCell.innerHTML = '❌';
+                    }
+                } catch (error) {
                     statusCell.innerHTML = '❌';
                 }
-            } catch (error) {
-                statusCell.innerHTML = '❌';
             }
         }
-    }
+
         function openItem(itemId) {
             fetch(`/item/${itemId}`, {
                 method: 'POST'
