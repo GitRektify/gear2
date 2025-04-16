@@ -83,7 +83,7 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <select class="prompt-select" onchange="setPromptKey(this, {{ loop.index0 }})">
+                        <select class="prompt-select" id="prompt_key_{{ loop.index0 }}" onchange="setPromptKey(this, {{ loop.index0 }})">
                             {% for key in prompt_config %}
                             <option value="{{ key }}">{{ key }}</option>
                             {% endfor %}
@@ -94,7 +94,7 @@
                     <i class="fas fa-minus-circle text-muted"></i>
                 </td>
                 <td>
-                    <button class="btn" onclick="openItem({{ loop.index0 }})">Open</button>
+                    <button class="btn" id="control_button_{{ loop.index0 }}" onclick="controlItem({{ loop.index0 }})">Start</button>
                 </td>
             </tr>
             {% endfor %}
@@ -285,6 +285,7 @@
             const totalItems = {{ items| length }};
 
             for (let i = 0; i < totalItems; i++) {
+                // const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
                 const statusCell = document.getElementById(`status-${i}`);
                 statusCell.innerHTML = '<div class="spinner"></div>';
 
@@ -309,18 +310,50 @@
             }
         }
 
-        function openItem(itemId) {
-            fetch(`/item/${itemId}`, {
-                method: 'POST'
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.url) {
-                        window.open(data.url, '_blank');  // ✅ Open in new tab
+        async function controlItem(itemId) {
+            const controlButton = document.getElementById(`control_button_${itemId}`)
+            console.log(controlButton.textContent)
+            if(controlButton.textContent === "Start"){
+                controlButton.innerHTML = 'Stop'
+
+                const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
+                const statusCell = document.getElementById(`status-${itemId}`);
+                statusCell.innerHTML = '<div class="spinner"></div>';
+
+                try {
+                    const res = await fetch(`/generate-item/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({ prompt_key: promptKey }),
+                    });
+
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        controlButton.innerHTML = 'Open'
+                        statusCell.innerHTML = '✅';
                     } else {
-                        alert('Page not published yet.');
+                        controlButton.innerHTML = 'Start'
+                        statusCell.innerHTML = '❌';
                     }
-                });
+                } catch (error) {
+                    statusCell.innerHTML = '❌';
+                }
+            }
+            else if(controlButton.textContent === "Open"){
+                fetch(`/item/${itemId}`, {
+                    method: 'POST'
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.url) {
+                            window.open(data.url, '_blank');  // ✅ Open in new tab
+                        } else {
+                            alert('Page not published yet.');
+                        }
+                    });
+            }
         }
     </script>
 </body>

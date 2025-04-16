@@ -20,7 +20,6 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    
     if request.method == 'POST':
         for item in items:
             slug = create_slug(item)
