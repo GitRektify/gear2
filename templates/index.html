@@ -71,6 +71,7 @@
                 <th>Prompts</th>
                 <th>Status</th>
                 <th>Action</th>
+                <th>Open</th>
             </tr>
         </thead>
         <tbody>
@@ -94,7 +95,10 @@
                     <i class="fas fa-minus-circle text-muted"></i>
                 </td>
                 <td>
-                    <button class="btn" id="control_button_{{ loop.index0 }}" onclick="controlItem({{ loop.index0 }})">Start</button>
+                    <button class="btn" id="start_button_{{ loop.index0 }}" onclick="startItem({{ loop.index0 }})">Start</button>
+                </td>
+                <td>
+                    <button class="btn" id="open_button_{{ loop.index0 }}" onclick="openItem({{ loop.index0 }})">Open</button>
                 </td>
             </tr>
             {% endfor %}
@@ -310,8 +314,8 @@
             }
         }
 
-        async function controlItem(itemId) {
-            const controlButton = document.getElementById(`control_button_${itemId}`)
+        async function startItem(itemId) {
+            const controlButton = document.getElementById(`start_button_${itemId}`)
             console.log(controlButton.textContent)
             if(controlButton.textContent === "Start"){
                 controlButton.innerHTML = 'Stop'
@@ -331,7 +335,7 @@
 
                     const data = await res.json();
                     if (data.status === 'success') {
-                        controlButton.innerHTML = 'Open'
+                        controlButton.innerHTML = 'Start'
                         statusCell.innerHTML = '✅';
                     } else {
                         controlButton.innerHTML = 'Start'
@@ -341,19 +345,20 @@
                     statusCell.innerHTML = '❌';
                 }
             }
-            else if(controlButton.textContent === "Open"){
-                fetch(`/item/${itemId}`, {
-                    method: 'POST'
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.url) {
-                            window.open(data.url, '_blank');  // ✅ Open in new tab
-                        } else {
-                            alert('Page not published yet.');
-                        }
-                    });
-            }
+        }
+
+        async function openItem(itemId) {
+            fetch(`/item/${itemId}`, {
+                method: 'POST'
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.url) {
+                        window.open(data.url, '_blank');  // ✅ Open in new tab
+                    } else {
+                        alert('Page not published yet.');
+                    }
+                });
         }
     </script>
 </body>
