@@ -85,7 +85,7 @@
                 <td>
                     <div class="prompt-dropdown-container">
                         <select class="prompt-select" id="prompt_key_{{ loop.index0 }}"
-                            onchange="setPromptKey(this, {{ loop.index0 }})">
+                            onchange="setPromptKey(this, '{{ loop.index0 }}')">
                             {% for key in prompt_config %}
                             <option value="{{ key }}">{{ key }}</option>
                             {% endfor %}
@@ -107,10 +107,10 @@
                 </td>
                 <td>
                     <button class="btn" id="start_button_{{ loop.index0 }}"
-                        onclick="startItem({{ loop.index0 }})">Start</button>
+                        onclick="startItem('{{ loop.index0 }}')">Start</button>
                 </td>
                 <td>
-                    <button class="btn" id="open_button_{{ loop.index0 }}" onclick="openItem({{ loop.index0 }})" {% if
+                    <button class="btn" id="open_button_{{ loop.index0 }}" onclick="openItem('{{ loop.index0 }}')" {% if
                         not item.get('wordpress_url') %}disabled{% endif %}>
                         Open
                     </button>
