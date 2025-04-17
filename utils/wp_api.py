@@ -6,17 +6,36 @@ app_password = 'q0wK 7z7E eKjW vhMw E1e8 KVPd'
 site_url = 'https://planipets.com/blog'
 api_url = f"{site_url}/wp-json/wp/v2/pages"
 
-# ✅ Check if page with given slug and parent exists
+# ✅ Try to fetch by slug AND parent_id (with fallback to slug-only for debugging)
 def get_page_by_slug_and_parent(slug, parent_id):
-    response = requests.get(
-        api_url,
-        params={"slug": slug, "parent": parent_id},
-        auth=HTTPBasicAuth(username, app_password)
-    )
-    if response.status_code == 200 and response.json():
-        return response.json()[0]
-    return None
-
+    if(parent_id == 0):
+        response = requests.get(
+            api_url,
+            params={"slug": slug},
+            auth=HTTPBasicAuth(username, app_password)
+        )
+        if response.status_code == 200:
+            print("Full response:", response.json())
+        return response.json()
+    else:
+        slug = slug.strip().lower()
+        response = requests.get(
+            api_url,
+            params={"slug": slug, "parent": parent_id},
+            auth=HTTPBasicAuth(username, app_password)
+        )
+        if response.status_code == 200 and response.json():
+            return response.json()[0]
+        # 🐛 Fallback to just slug (debugging)
+        response = requests.get(
+            api_url,
+            params={"slug": slug},
+            auth=HTTPBasicAuth(username, app_password)
+        )
+        if response.status_code == 200 and response.json():
+            print(f"⚠️ Page '{slug}' exists, but under a different parent ID: {response.json()[0]['parent']}")
+            return response.json()[0]
+        return None
 # ✅ Publish to WordPress
 def publish_to_wordpress(content, slug):
     parent_path = slug.strip('/').split('/')[:-1]  # All but last

@@ -214,6 +214,7 @@ tr:hover {
 .prompt-select {
     margin-top: 5px;
     width: 60%;
+    max-width: 90px;
 }
 
 .kv-modal h4 {
@@ -372,6 +373,33 @@ select {
 }
 
 .modal-box p {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.confirm-box {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-box p {
     margin-bottom: 20px;
     font-size: 16px;
 }

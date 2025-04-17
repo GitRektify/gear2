@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <title>Gear2</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="https://planipets.com/images/logo.png" type="image/png" />
 </head>
 
 <body>
@@ -22,7 +23,7 @@
                 <label style="margin-left: 5px;"><strong>Headings</strong></label>
                 <!-- Key List -->
                 <ul id="keyList"
-                    style="list-style: none; padding: 0; margin-top: 10px; height: 325px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
+                    style="max-width: 145px; list-style: none; padding: 0; margin-top: 10px; height: 325px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px;">
                 </ul>
                 <!-- Buttons aligned with keyList edges -->
                 <div style="margin-top: auto; display: flex; justify-content: space-between; padding-top: 10px;">
@@ -247,8 +248,9 @@
             document.getElementById("saveBtn").disabled = false;
         }
 
-        function deleteCurrentKey() {
-            if (selectedKey && confirm(`Are you sure you want to delete "${selectedKey}"?`)) {
+        async function deleteCurrentKey() {
+            const confirmed = await showConfirm(`Are you sure you want to delete "${selectedKey}"?`);
+            if (selectedKey && confirmed) {
                 delete kvStore[selectedKey];
 
                 fetch("/save-config", {
@@ -405,6 +407,32 @@
         function closeAlert() {
             document.getElementById("alertModal").style.display = "none";
         }
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                document.getElementById("confirmMessage").textContent = message;
+                document.getElementById("confirmModal").style.display = "flex";
+
+                const okBtn = document.getElementById("confirmOk");
+                const cancelBtn = document.getElementById("confirmCancel");
+
+                okBtn.onclick = function () {
+                    document.getElementById("confirmModal").style.display = "none";
+                    resolve(true);
+                };
+
+                cancelBtn.onclick = function () {
+                    document.getElementById("confirmModal").style.display = "none";
+                    resolve(false);
+                };
+            });
+        }
+
+
+
+        function closeConfirm() {
+            document.getElementById("confirmModal").style.display = "none";
+            return true;
+        }
 
     </script>
     <div id="alertModal" class="modal-overlay" style="display: none;">
@@ -413,6 +441,13 @@
             <button class="btn" onclick="closeAlert()">OK</button>
         </div>
     </div>
+    <div id="confirmModal" class="confirm-overlay" style="display: none;">
+    <div class="confirm-box">
+        <p id="confirmMessage">This is a confirm message.</p>
+        <button class="btn" id="confirmOk">OK</button>
+        <button class="btn" id="confirmCancel">Cancel</button>
+    </div>
+</div>
 </body>
 
 </html>
