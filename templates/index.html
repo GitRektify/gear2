@@ -146,6 +146,7 @@
 
             panel.style.display = isVisible ? "none" : "block";
             overlay.style.display = isVisible ? "none" : "block";
+            isVisible ? window.location.href = '/' : none
         }
 
         function resetFormToOriginal() {
@@ -293,37 +294,35 @@
             }
         }
 
+        // async function generateAll() {
+        //     const promptKey = document.getElementById("prompt_key").value
+        //     const totalItems = {{ items| length }}
 
-        async function generateAll() {
-            const promptKey = document.getElementById("prompt_key").value;
-            const totalItems = {{ items| length
-        }};
+        //     for (let i = 0; i < totalItems; i++) {
+        //         // const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
+        //         const statusCell = document.getElementById(`status-${i}`);
+        //         statusCell.innerHTML = '<div class="spinner"></div>';
 
-        for (let i = 0; i < totalItems; i++) {
-            // const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
-            const statusCell = document.getElementById(`status-${i}`);
-            statusCell.innerHTML = '<div class="spinner"></div>';
+        //         try {
+        //             const res = await fetch(`/generate-item/${i}`, {
+        //                 method: 'POST',
+        //                 headers: {
+        //                     'Content-Type': 'application/x-www-form-urlencoded',
+        //                 },
+        //                 body: new URLSearchParams({ prompt_key: promptKey }),
+        //             });
 
-            try {
-                const res = await fetch(`/generate-item/${i}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({ prompt_key: promptKey }),
-                });
-
-                const data = await res.json();
-                if (data.status === 'success') {
-                    statusCell.innerHTML = '✅';
-                } else {
-                    statusCell.innerHTML = '❌';
-                }
-            } catch (error) {
-                statusCell.innerHTML = '❌';
-            }
-        }
-        }
+        //             const data = await res.json();
+        //             if (data.status === 'success') {
+        //                 statusCell.innerHTML = '✅';
+        //             } else {
+        //                 statusCell.innerHTML = '❌';
+        //             }
+        //         } catch (error) {
+        //             statusCell.innerHTML = '❌';
+        //         }
+        //     }
+        // }
 
         async function startItem(itemId) {
             const controlButton = document.getElementById(`start_button_${itemId}`);
