@@ -11,10 +11,10 @@
     <img src="https://planipets.com/images/logo.png" alt="">
 
     <div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
-    <button class="settings-button btn" onclick="toggleSettings()">⚙️ Settings</button>
+    <button class="settings-button btn" onclick="toggleSettings()">✏️ Edit Prompts</button>
 
     <div class="settings-panel" id="settingsPanel" style="display: none;">
-        <h3>Settings</h3>
+        <h2 style="margin-left: 10px; text-align: left;">Settings</h2>
         <div style="display: flex; margin-top: 20px; gap: 20px;">
             <!-- Left: Key List -->
             <div style="flex: 1; display: flex; flex-direction: column;">
@@ -53,7 +53,7 @@
         <div class="file-upload">
             <label for="file-input" class="file-label">📂 Choose CSV File</label>
             <input type="file" name="file" id="file-input" onchange="showFileNameAndButton()" />
-            <button type="submit" class="file-label" id="import-btn">▶ Start</button>
+            <button type="submit" class="file-label" id="import-btn">Import</button>
         </div>
         <div class="file-name" id="file-name" style="display: none;"></div>
     </form>
@@ -84,34 +84,44 @@
                 <td>{{ item['specificite'] }}</td>
                 <td>
                     <div class="prompt-dropdown-container">
-                        <select class="prompt-select" id="prompt_key_{{ loop.index0 }}" onchange="setPromptKey(this, {{ loop.index0 }})">
+                        <select class="prompt-select" id="prompt_key_{{ loop.index0 }}"
+                            onchange="setPromptKey(this, {{ loop.index0 }})">
                             {% for key in prompt_config %}
                             <option value="{{ key }}">{{ key }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </td>
+
                 <td id="status-{{ loop.index0 }}">
+                    {% set status = status_map.get(loop.index0, 'idle') %}
+                    {% if status == 'success' %}
+                    ✅
+                    {% elif status == 'fail' %}
+                    ❌
+                    {% elif status == 'generating' %}
+                    <div class="spinner"></div>
+                    {% else %}
                     <i class="fas fa-minus-circle text-muted"></i>
+                    {% endif %}
                 </td>
                 <td>
-                    <button class="btn" id="start_button_{{ loop.index0 }}" onclick="startItem({{ loop.index0 }})">Start</button>
+                    <button class="btn" id="start_button_{{ loop.index0 }}"
+                        onclick="startItem({{ loop.index0 }})">Start</button>
                 </td>
                 <td>
-                    <button class="btn" id="open_button_{{ loop.index0 }}" onclick="openItem({{ loop.index0 }})">Open</button>
+                    <button class="btn" id="open_button_{{ loop.index0 }}" onclick="openItem({{ loop.index0 }})" {% if
+                        not item.get('wordpress_url') %}disabled{% endif %}>
+                        Open
+                    </button>
+
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <select id="prompt_key">
-        {% for key in prompt_config %}
-        <option value="{{ key }}">{{ key }}</option>
-        {% endfor %}
-    </select>
-    <button onclick="generateAll()">Generate All</button>
     {% else %}
-    <p>No valid items found in the CSV.</p>
+    <p></p>
     {% endif %}
 
     <script>
@@ -194,12 +204,12 @@
             const newValue = document.getElementById("editValue").value.trim();
 
             if (!newKey || !newValue) {
-                alert("Both fields are required.");
+                showAlert("Both fields are required.");
                 return;
             }
 
             if ((!selectedKey || newKey !== selectedKey) && kvStore.hasOwnProperty(newKey)) {
-                alert("Key already exists.");
+                showAlert("Key already exists.");
                 return;
             }
 
@@ -215,12 +225,12 @@
                 body: JSON.stringify(kvStore)
             }).then(res => {
                 if (res.ok) {
-                    alert("Settings saved!");
+                    showAlert("Settings saved!");
                     originalKVStore = JSON.parse(JSON.stringify(kvStore));
                     populateKeyList();
                     loadKeyValue(newKey);
                 } else {
-                    alert("Failed to save settings.");
+                    showAlert("Failed to save settings.");
                 }
             });
         }
@@ -256,7 +266,7 @@
                         }
                         document.getElementById("saveBtn").disabled = true;
                     } else {
-                        alert("Failed to delete and save.");
+                        showAlert("Failed to delete and save.");
                     }
                 });
             }
@@ -286,43 +296,47 @@
 
         async function generateAll() {
             const promptKey = document.getElementById("prompt_key").value;
-            const totalItems = {{ items| length }};
+            const totalItems = {{ items| length
+        }};
 
-            for (let i = 0; i < totalItems; i++) {
-                // const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
-                const statusCell = document.getElementById(`status-${i}`);
-                statusCell.innerHTML = '<div class="spinner"></div>';
+        for (let i = 0; i < totalItems; i++) {
+            // const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
+            const statusCell = document.getElementById(`status-${i}`);
+            statusCell.innerHTML = '<div class="spinner"></div>';
 
-                try {
-                    const res = await fetch(`/generate-item/${i}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({ prompt_key: promptKey }),
-                    });
+            try {
+                const res = await fetch(`/generate-item/${i}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ prompt_key: promptKey }),
+                });
 
-                    const data = await res.json();
-                    if (data.status === 'success') {
-                        statusCell.innerHTML = '✅';
-                    } else {
-                        statusCell.innerHTML = '❌';
-                    }
-                } catch (error) {
+                const data = await res.json();
+                if (data.status === 'success') {
+                    statusCell.innerHTML = '✅';
+                } else {
                     statusCell.innerHTML = '❌';
                 }
+            } catch (error) {
+                statusCell.innerHTML = '❌';
             }
+        }
         }
 
         async function startItem(itemId) {
-            const controlButton = document.getElementById(`start_button_${itemId}`)
-            console.log(controlButton.textContent)
-            if(controlButton.textContent === "Start"){
-                controlButton.innerHTML = 'Stop'
+            const controlButton = document.getElementById(`start_button_${itemId}`);
+            const statusCell = document.getElementById(`status-${itemId}`);
+            const openButton = document.getElementById(`open_button_${itemId}`);
+            const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
 
-                const promptKey = document.getElementById(`prompt_key_${itemId}`).value;
-                const statusCell = document.getElementById(`status-${itemId}`);
+            if (controlButton.textContent === "Start") {
+                controlButton.textContent = "Stop";
                 statusCell.innerHTML = '<div class="spinner"></div>';
+
+                // Store active state per item
+                controlButton.dataset.active = "true";
 
                 try {
                     const res = await fetch(`/generate-item/${itemId}`, {
@@ -334,16 +348,39 @@
                     });
 
                     const data = await res.json();
+
+                    // ❗ Check if it was manually stopped
+                    if (controlButton.dataset.active !== "true") {
+                        console.log("Generation stopped manually.");
+                        statusCell.innerHTML = '❌';
+                        controlButton.textContent = "Start";
+                        return;
+                    }
+
                     if (data.status === 'success') {
-                        controlButton.innerHTML = 'Start'
                         statusCell.innerHTML = '✅';
+                        openButton.disabled = false;
                     } else {
-                        controlButton.innerHTML = 'Start'
                         statusCell.innerHTML = '❌';
                     }
                 } catch (error) {
                     statusCell.innerHTML = '❌';
                 }
+
+                controlButton.textContent = "Start";
+                controlButton.dataset.active = "";
+            } else {
+                // ❌ User clicked "Stop"
+                controlButton.textContent = "Start";
+                controlButton.dataset.active = "";
+
+                // Mark as failed
+                statusCell.innerHTML = '❌';
+
+                // Optional: send a stop signal to the server (if needed)
+                await fetch(`/cancel-generation/${itemId}`, {
+                    method: 'POST'
+                });
             }
         }
 
@@ -356,11 +393,27 @@
                     if (data.url) {
                         window.open(data.url, '_blank');  // ✅ Open in new tab
                     } else {
-                        alert('Page not published yet.');
+                        showAlert('Page not published yet.');
                     }
                 });
         }
+
+        function showAlert(message) {
+            document.getElementById("alertMessage").textContent = message;
+            document.getElementById("alertModal").style.display = "flex";
+        }
+
+        function closeAlert() {
+            document.getElementById("alertModal").style.display = "none";
+        }
+
     </script>
+    <div id="alertModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <p id="alertMessage">This is an alert message.</p>
+            <button class="btn" onclick="closeAlert()">OK</button>
+        </div>
+    </div>
 </body>
 
 </html>

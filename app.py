@@ -1,10 +1,14 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import csv, os, json
-from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html, delete_existing_page_by_slug
+from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
+
+pro = ''
+city = ''
+status_map = {}  # item_id -> "pending" | "success" | "fail" | "generating"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -20,41 +24,53 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
+    global items
     if request.method == 'POST':
-        for item in items:
-            slug = create_slug(item)
-            delete_existing_page_by_slug(slug)
-        items.clear()
-        file = request.files['file']
+        file = request.files.get('file')
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
+            new_items = []
             with open(filepath, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    items.append(row)
+                    new_items.append(row)
 
-    return render_template('index.html', items=items, prompt_config=prompt_config)
+            items = new_items
+            for i in range(len(items)):
+                status_map[i] = "pending"
+
+            return redirect(url_for('upload_file'))
+
+    return render_template('index.html', items=items, prompt_config=prompt_config, status_map=status_map)
 
 @app.route('/generate-item/<int:item_id>', methods=['POST'])
 def generate_item(item_id):
+    status_map[item_id] = "generating"
     item = items[item_id]
-    prompt_key = request.form.get("prompt_key", "default")
-    if prompt_key == 'default':
-        prompt_key = 'template'
-
+    prompt_key = request.form.get("prompt_key", "template")
     slug = create_slug(item)
-    print("HHHHHHHHHHHHHHHHHHHHHHHH", slug)
+    pro = item['ville']
+    city = item['metier']
     internal_links = get_internal_links(item)
     content = generate_content(item, prompt_config[prompt_key], internal_links)
-    content = md_to_html(content)
-    print('slugggggggggggggggg', slug)
-    resultUrl = publish_to_wordpress(content, slug)
-    item["wordpress_url"] = resultUrl
+    content = md_to_html(content, pro, city)
 
-    return jsonify({"status": "success", "url": resultUrl})
+    try:
+        resultUrl = publish_to_wordpress(content, slug)
+        item["wordpress_url"] = resultUrl
+        status_map[item_id] = "success"
+        return jsonify({"status": "success", "url": resultUrl})
+    except Exception as e:
+        status_map[item_id] = "fail"
+        return jsonify({"status": "fail", "error": str(e)})
+
+@app.route('/cancel-generation/<int:item_id>', methods=['POST'])
+def cancel_generation(item_id):
+    status_map[item_id] = "fail"
+    return jsonify({"status": "cancelled"})
 
 @app.route('/item/<int:item_id>', methods=['POST'])
 def open_item(item_id):
@@ -68,11 +84,9 @@ def open_item(item_id):
 def save_config():
     global prompt_config
     prompt_config = request.get_json()
-    # Optionally, persist to file
-    with open(config_path, "w") as f:
-        json.dump(prompt_config, f)
+    with open(config_path, "w", encoding='utf-8') as f:
+        json.dump(prompt_config, f, ensure_ascii=False, indent=2)
     return jsonify({"success": True})
-
 
 if __name__ == '__main__':
     app.run(debug=True)

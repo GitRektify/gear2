@@ -1,5 +1,5 @@
 def create_slug(row):
-    parts = ['toiletteur', 'chien', row['ville']]
+    parts = [row['metier'], row['animal'], row['ville']]
     if row.get('quartier'):
         parts.append(row['quartier'])
     if row.get('specificite'):
