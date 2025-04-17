@@ -44,6 +44,8 @@ def upload_file():
 
             return redirect(url_for('upload_file'))
 
+    # with open(prompt_config, 'r', encoding='utf-8') as f:
+    #     prompt_config = json.load(f)
     return render_template('index.html', items=items, prompt_config=prompt_config, status_map=status_map)
 
 @app.route('/generate-item/<int:item_id>', methods=['POST'])
