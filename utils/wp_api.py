@@ -8,34 +8,24 @@ api_url = f"{site_url}/wp-json/wp/v2/pages"
 
 # ✅ Try to fetch by slug AND parent_id (with fallback to slug-only for debugging)
 def get_page_by_slug_and_parent(slug, parent_id):
-    if(parent_id == 0):
-        response = requests.get(
-            api_url,
-            params={"slug": slug},
-            auth=HTTPBasicAuth(username, app_password)
-        )
-        if response.status_code == 200:
-            print("Full response:", response.json())
-        return response.json()
-    else:
-        slug = slug.strip().lower()
-        response = requests.get(
-            api_url,
-            params={"slug": slug, "parent": parent_id},
-            auth=HTTPBasicAuth(username, app_password)
-        )
-        if response.status_code == 200 and response.json():
-            return response.json()[0]
-        # 🐛 Fallback to just slug (debugging)
-        response = requests.get(
-            api_url,
-            params={"slug": slug},
-            auth=HTTPBasicAuth(username, app_password)
-        )
-        if response.status_code == 200 and response.json():
-            print(f"⚠️ Page '{slug}' exists, but under a different parent ID: {response.json()[0]['parent']}")
-            return response.json()[0]
-        return None
+    slug = slug.strip().lower()
+    response = requests.get(
+        api_url,
+        params={"slug": slug, "parent": parent_id},
+        auth=HTTPBasicAuth(username, app_password)
+    )
+    if response.status_code == 200 and response.json():
+        return response.json()[0]
+    # 🐛 Fallback to just slug (debugging)
+    response = requests.get(
+        api_url,
+        params={"slug": slug},
+        auth=HTTPBasicAuth(username, app_password)
+    )
+    if response.status_code == 200 and response.json():
+        print(f"⚠️ Page '{slug}' exists, but under a different parent ID: {response.json()[0]['parent']}")
+        return response.json()[0]
+    return None
 # ✅ Publish to WordPress
 def publish_to_wordpress(content, slug):
     parent_path = slug.strip('/').split('/')[:-1]  # All but last
