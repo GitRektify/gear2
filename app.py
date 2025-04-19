@@ -93,7 +93,8 @@ def save_config():
 
 if __name__ == "__main__":
     # If in debug mode, run with Flask's built-in server
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
 
 # if __name__ == "__main__":
 #     # Check if we're in debug mode
