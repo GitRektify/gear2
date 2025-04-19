@@ -4,7 +4,9 @@ from openai import OpenAI
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_key = os.environ.get("OPENAI_API_KEY")
+print(f"OpenAI Key: {openai_key}")
+client = OpenAI(api_key=openai_key)
 
 def generate_content(data, prompt_config, internal_links):
     prompt = prompt_config
