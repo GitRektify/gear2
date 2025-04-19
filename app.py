@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
+from waitress import serve
 from werkzeug.utils import secure_filename
 import csv, os, json
 from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html
@@ -90,5 +91,11 @@ def save_config():
         json.dump(prompt_config, f, ensure_ascii=False, indent=2)
     return jsonify({"success": True})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # Check if we're in debug mode
+    if app.debug:
+        # If in debug mode, run with Flask's built-in server
+        app.run(debug=True, host="0.0.0.0", port=5000)
+    else:
+        # If not in debug mode, use Waitress
+        serve(app, host="0.0.0.0", port=5000)
