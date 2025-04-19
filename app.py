@@ -92,12 +92,16 @@ def save_config():
     return jsonify({"success": True})
 
 if __name__ == "__main__":
-    # Check if we're in debug mode
-    if app.debug:
-        print("debug mode")
-        # If in debug mode, run with Flask's built-in server
-        app.run(debug=True, host="0.0.0.0", port=5000)
-    else:
-        print("serve mode")
-        # If not in debug mode, use Waitress
-        serve(app, host="0.0.0.0", port=5000)
+    # If in debug mode, run with Flask's built-in server
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
+# if __name__ == "__main__":
+#     # Check if we're in debug mode
+#     if app.debug:
+#         print("debug mode")
+#         # If in debug mode, run with Flask's built-in server
+#         app.run(debug=True, host="0.0.0.0", port=5000)
+#     else:
+#         print("serve mode")
+#         # If not in debug mode, use Waitress
+#         serve(app, host="0.0.0.0", port=5000)

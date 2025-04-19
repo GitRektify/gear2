@@ -1,11 +1,12 @@
+import os
 from openai import OpenAI
+from dotenv import load_dotenv
 
 def get_openai_client():
-    import os
-    from dotenv import load_dotenv
     load_dotenv()  # only affects local development
 
     openai_key = os.environ.get("OPENAI_API_KEY")
+    print(openai_key)
     if not openai_key:
         raise ValueError("OPENAI_API_KEY is not set.")
 
