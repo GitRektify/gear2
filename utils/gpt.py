@@ -2,10 +2,12 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv()
+# load_dotenv()
 
 openai_key = os.environ.get("OPENAI_API_KEY")
-print(f"OpenAI Key: {openai_key}")
+openai_key2 = os.environ.get("TEST")
+openai_key3 = os.getenv("TEST")
+print(f"OpenAI Key: {openai_key} {openai_key2} {openai_key3}")
 client = OpenAI(api_key=openai_key)
 
 def generate_content(data, prompt_config, internal_links):
