@@ -7,9 +7,8 @@ if os.getenv("RAILWAY_ENV") is None:
     load_dotenv()
 
 def get_openai_client():
-    openai_key = "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"
     # openai_key = os.environ.get("OPENAI_API_KEY")
-    
+
     print(f"🔑 OpenAI Key: {openai_key}")
 
     if not openai_key:
@@ -21,6 +20,12 @@ def generate_content(data, prompt_config, internal_links):
     client = get_openai_client()
 
     prompt = prompt_config
+
+    proptSimilarObject = "**\"Here is an original JSON object and a prompt template.\nPlease:\nGenerate 5 new JSON objects where each has only one key different from the original (changing one of ville, quartier, metier, animal, specificite).\n\"**"
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+    )
 
     # Replace placeholders with actual data
     for key in data:
