@@ -67,7 +67,7 @@ def generate_item(item_id):
     session['status_map'] = status_map
 
     item = items[item_id]
-    prompt_key = request.form.get("prompt_key", "template")
+    prompt_key = request.form.get("prompt_key", "example")
     slug = create_slug(item)
     pro = item['ville']
     city = item['metier']
@@ -124,7 +124,7 @@ def generate_item_from_object():
     if not item:
         return jsonify({"status": "fail", "error": "No item provided"}), 400
 
-    prompt_key = item.get("prompt_key", "template")
+    prompt_key = item.get("prompt_key", "example")
     slug = create_slug(item)
     pro = item['ville']
     city = item['metier']
