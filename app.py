@@ -1,5 +1,6 @@
 
 from flask import Flask, request, render_template, redirect, url_for, jsonify, session
+from flask_cors import CORS
 from waitress import serve
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -10,6 +11,7 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
 
 app = Flask(__name__)
+CORS(app)  # 👈 allow just your domain
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'your-secret-key'  # Replace with a secure, random key in production
