@@ -12,30 +12,27 @@ def get_openai_client():
     openai_key = os.getenv("OPENAI_API_KEY")
     if not openai_key:
         raise ValueError("OPENAI_API_KEY is not set.")
-
-    client = OpenAI(api_key=openai_key)  # Correct for openai>=1.0.0
-    return client
+    return OpenAI(api_key=openai_key)
 
 def generate_content(data, prompt_config, internal_links):
     client = get_openai_client()
-    objects = getRelativeInfo(client, data)
+    objects = get_relative_info(client, data)
 
-    prompt = prompt_config
-
+    # Replace all {{key}} in the prompt template
     for key in data:
-        prompt = prompt.replace(f"{{{{{key}}}}}", data[key])
+        prompt_config = prompt_config.replace(f"{{{{{key}}}}}", data[key])
 
-    prompt = prompt.replace("{{internal_links}}", ", ".join(internal_links))
+    prompt_config = prompt_config.replace("{{internal_links}}", ", ".join(internal_links))
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": prompt_config}],
     )
 
     return response.choices[0].message.content, objects
 
-def getRelativeInfo(client, originJson):
-    promptSimilarObject = (
+def get_relative_info(client, origin_json):
+    prompt_similar_object = (
         "**Prompt Message to ChatGPT:**\n"
         "Here is an original JSON object and some link generation rules.  \n"
         "Please generate **5 new JSON objects** for 5 internal links:  \n"
@@ -49,23 +46,24 @@ def getRelativeInfo(client, originJson):
         "- `link_5_cross`: Another different related service  \n"
         "💡 If a slot can't be filled (e.g. no relevant variation), leave it blank (no error).  \n"
         "✅ Respond with 5 separate JSON objects, clearly labeled per link.\n"
-        "### Input JSON:\n" + json.dumps(originJson, indent=2)
+        "### Input JSON:\n" + json.dumps(origin_json, indent=2)
     )
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": promptSimilarObject}],
+        messages=[{"role": "user", "content": prompt_similar_object}],
     )
+
     raw_data = response.choices[0].message.content
 
-    similarStrings = re.findall(r'```json\s*(\{.*?\})\s*```', raw_data, re.DOTALL)
-    newObjects = []
-    for js in similarStrings:
+    # Extract all code blocks containing JSON
+    similar_strings = re.findall(r'```json\s*(\{.*?\})\s*```', raw_data, re.DOTALL)
+    new_objects = []
+
+    for js in similar_strings:
         obj = json.loads(js)
-        for key, value in obj.items():
-            newObjects.append(value)
+        for _, value in obj.items():
+            new_objects.append(value)
+            print(f"Generated variation: {value}")
 
-    for value in newObjects:
-        print(f"key: {value}")
-
-    return newObjects
+    return new_objects
