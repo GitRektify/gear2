@@ -1,4 +1,6 @@
 import os
+import re
+import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -22,12 +24,19 @@ def generate_content(data, prompt_config, internal_links):
 
     prompt = prompt_config
 
-    proptSimilarObject = "**\"Here is an original JSON object and a prompt template.\nPlease:\nGenerate 5 new JSON objects where each has only one key different from the original (changing one of ville, quartier, metier, animal, specificite).\n\"**"
+    promptSimilarObject = "**Prompt Message to ChatGPT:**\nHere is an original JSON object and some link generation rules.  \nPlease generate **5 new JSON objects** for 5 internal links:  \n### Rules:\n🔷 **Block 1 – Same service + same city**  \n- `link_1_spec_same`: Same service + same city + same specificity (different page)  \n- `link_2_spec_same`: Another one like above  \n- `link_3_no_spec`: Same service + same city, **without specificity**\n🔷 **Block 2 – Cross-services (same city)**  \n- `link_4_cross`: Related service (educateur veterinaire comportementaliste)  \n- `link_5_cross`: Another different related service  \n💡 If a slot can't be filled (e.g. no relevant variation), leave it blank (no error).  \n✅ Respond with 5 separate JSON objects, clearly labeled per link.\n### Input JSON:"
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": proptSimilarObject + str(data)}],
+        messages=[{"role": "user", "content": promptSimilarObject + str(data)}],
     )
-    similarObject = response.choices[0].message.content
+    raw_data = response.choices[0].message.content
+    similarStrings = re.findall(r'```json\s*(\{.*?\})\s*```', raw_data, re.DOTALL)
+    # Convert them into Python dictionaries
+    similarObjects = [json.loads(js) for js in similarStrings]
+
+    # Print or use the objects
+    for i, obj in enumerate(similarObjects, 1):
+        print(f"Object {i}: {obj}")
     sdfsd=0
 
     # Replace placeholders with actual data
