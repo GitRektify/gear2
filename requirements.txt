@@ -6,3 +6,4 @@ requests
 markdown
 gunicorn
 waitress
+flask-cors

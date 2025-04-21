@@ -14,13 +14,13 @@ def get_page_by_slug_and_parent(slug, parent_id):
     response = requests.get(api_url, params={"slug": slug, "parent": parent_id}, auth=HTTPBasicAuth(username, app_password))
     if response.status_code == 200 and response.json():
         return response.json()[0]
-    
+
     # Fallback to slug-only (debug)
     response = requests.get(api_url, params={"slug": slug}, auth=HTTPBasicAuth(username, app_password))
     if response.status_code == 200 and response.json():
         print(f"⚠️ Found page '{slug}' but with different parent ID: {response.json()[0]['parent']}")
         return response.json()[0]
-    
+
     return None
 
 # Publish content to WordPress as a Page
