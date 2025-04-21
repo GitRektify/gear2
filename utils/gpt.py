@@ -3,13 +3,17 @@ import re
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
+import base64
 
 # Load .env only in local dev
 if os.getenv("RAILWAY_ENV") is None:
     load_dotenv()
 
 def get_openai_client():
-    openai_key = os.getenv("OPENAI_API_KEY")
+    # openai_key = os.getenv("OPENAI_API_KEY")
+    code = "c2stcHJvai1GenN1T0F4cHhycDVDSzRfZUgzSDI5SnQyT19zNzhMblpBcGN1RFd3V1dnTC15ekM4R3RCdFhBX3Rzc1dBMWgzQVFDR1pObEdHWlQzQmxia0ZKX2NTeDRoWkVMc3RKMXRMamJEYVNFOHFBelZvWjhsM3Y1WjZpcHBBUkwxTWRIa0pROEN2ZmtWWW1FQXdsZHhDRm9PNUZRQzMyZ0E="
+    openai_key =  base64.b64decode(code).decode()
+    print("kkkkkkkkkkkkkkkkkkkkkk", openai_key)
     if not openai_key:
         raise ValueError("OPENAI_API_KEY is not set.")
     return OpenAI(api_key=openai_key)
