@@ -62,7 +62,7 @@ def md_to_html(md_content, city, pro, objects, base_url):
                     const item = JSON.parse(button.getAttribute('data-obj'));
                     const base_url = "{base_url}";
                     try {{
-                        const res = await fetch(base_url + '/generate-item', {{
+                        const res = await fetch(base_url + 'generate-item', {{
                             method: 'POST',
                             headers: {{ 'Content-Type': 'application/json' }},
                             body: JSON.stringify({{ item }})
