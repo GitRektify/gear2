@@ -35,12 +35,25 @@ def md_to_html(md_content, city, pro, objects, base_url):
     link_url = f"https://planipets.com/etablissements?name={pro}&address={city}%2C%20France&lat={lat}&lng={lng}"
     link_md = f"[{link_text}]({link_url})"
 
+    # def format_text(obj, include_specific=True):
+    #     base = f"{obj['animal']} {obj['metier']}"
+    #     if include_specific and obj.get("specificite"):
+    #         base += f" for {obj['specificite']} {obj['animal']}"
+    #     base += f" in {obj['ville']} {obj['quartier']}"
+    #     return base[0].upper() + base[1:]
+
     def format_text(obj, include_specific=True):
+    # Convert to dict if it's a JSON string
+        if isinstance(obj, str):
+            try:
+                obj = json.loads(obj)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid object format, expected a dictionary or JSON string.")
+
         base = f"{obj['animal']} {obj['metier']}"
-        if include_specific and obj.get("specificite"):
-            base += f" for {obj['specificite']} {obj['animal']}"
-        base += f" in {obj['ville']} {obj['quartier']}"
-        return base[0].upper() + base[1:]
+        if include_specific and 'specificite' in obj and obj['specificite']:
+            base += f" spécialisé en {obj['specificite']}"
+        return base
 
     def format_button(obj, index):
         label = format_text(obj, include_specific=(index < 2))
