@@ -63,8 +63,10 @@ def generate_item(item_id):
     pro = item['ville']
     city = item['metier']
     internal_links = get_internal_links(item)
-    content = generate_content(item, prompt_config[prompt_key], internal_links)
-    content = md_to_html(content, pro, city)
+
+    content, objects =  generate_content(item, prompt_config[prompt_key], internal_links)
+    print("oooooooooooo", objects)
+    content = md_to_html(content, pro, city, objects)
 
     try:
         resultUrl = publish_to_wordpress(content, slug)
