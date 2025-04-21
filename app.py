@@ -2,6 +2,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify, session
 from waitress import serve
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 import csv, os, json
 from utils import generate_content, publish_to_wordpress, create_slug, get_internal_links, md_to_html
 
@@ -9,6 +10,7 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'your-secret-key'  # Replace with a secure, random key in production
 
@@ -22,7 +24,7 @@ def allowed_file(filename):
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     global base_url
-    base_url = request.host_url
+    base_url = request.url_root
     print(base_url)
 
     if request.method == 'POST':
