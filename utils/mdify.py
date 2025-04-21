@@ -71,30 +71,30 @@ def md_to_html(md_content, city, pro, objects):
     # Return combined HTML with raw HTML buttons and JS
     return Markup(
         html_content +
-        f"<h2>See also</h2>\n<ul>{buttons_html}</ul>" +
-        '''
-        <script>
-            async function generateAndOpen(item) {
-                console.log("Sending item to server:", item);
-                try {
-                    const generateRes = await fetch('/generate-item', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ item })
-                    });
+        f"<h2>See also</h2>\n<ul>{buttons_html}</ul>"
+    ) + Markup('''
+    <script>
+        async function generateAndOpen(item) {
+            console.log("Sending item to server:", item);
+            try {
+                const generateRes = await fetch('/generate-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item })
+                });
 
-                    const genData = await generateRes.json();
-                    if (genData.status !== 'success') {
-                        alert("Generation failed: " + (genData.error || "Unknown error"));
-                        return;
-                    }
-
-                    window.open(genData.url, '_blank');
-                } catch (err) {
-                    console.error("Error:", err);
-                    alert("An error occurred.");
+                const genData = await generateRes.json();
+                if (genData.status !== 'success') {
+                    alert("Generation failed: " + (genData.error || "Unknown error"));
+                    return;
                 }
+
+                window.open(genData.url, '_blank');
+            } catch (err) {
+                console.error("Error:", err);
+                alert("An error occurred.");
             }
-        </script>
-        '''
-    )
+        }
+    </script>
+    ''')
+

@@ -67,10 +67,10 @@ def publish_to_wordpress(content, slug, extra_data=None):
     schema = f"""
     <script type="application/ld+json">
     {{
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": "{page_slug.replace('-', ' ').title()}",
-      "url": "{site_url}/{slug.strip('/')}"
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{page_slug.replace('-', ' ').title()}",
+    "url": "{site_url}/{slug.strip('/')}"
     }}
     </script>
     """
