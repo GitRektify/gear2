@@ -10,7 +10,7 @@ if os.getenv("RAILWAY_ENV") is None:
 
 def get_openai_client():
     # openai_key = os.getenv("OPENAI_API_KEY").strip()
-    openai_key = "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"
+    openai_key = "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"
     if not openai_key:
         raise ValueError("OPENAI_API_KEY is not set.")
 
