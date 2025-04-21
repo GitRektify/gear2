@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, redirect, url_for, jsonify
+
+from flask import Flask, request, render_template, redirect, url_for, jsonify, session
 from waitress import serve
 from werkzeug.utils import secure_filename
 import csv, os, json
@@ -7,17 +8,12 @@ from utils import generate_content, publish_to_wordpress, create_slug, get_inter
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'csv'}
 
-pro = ''
-city = ''
-status_map = {}  # item_id -> "pending" | "success" | "fail" | "generating"
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = 'your-secret-key'  # Replace with a secure, random key in production
 
-items = []
 config_path = 'prompts/default.json'
 prompt_config = json.load(open(config_path, encoding='utf-8'))
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
@@ -25,7 +21,6 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    global items
     if request.method == 'POST':
         file = request.files.get('file')
         if file and allowed_file(file.filename):
@@ -39,19 +34,29 @@ def upload_file():
                 for row in reader:
                     new_items.append(row)
 
-            items = new_items
-            for i in range(len(items)):
-                status_map[i] = "pending"
+            session['items'] = new_items
+            session['status_map'] = {str(i): "pending" for i in range(len(new_items))}
 
             return redirect(url_for('upload_file'))
 
-    # with open(prompt_config, 'r', encoding='utf-8') as f:
-    #     prompt_config = json.load(f)
-    return render_template('index.html', items=items, prompt_config=prompt_config, status_map=status_map)
+    return render_template(
+        'index.html',
+        items=session.get('items', []),
+        prompt_config=prompt_config,
+        status_map=session.get('status_map', {})
+    )
 
 @app.route('/generate-item/<int:item_id>', methods=['POST'])
 def generate_item(item_id):
-    status_map[item_id] = "generating"
+    items = session.get('items', [])
+    status_map = session.get('status_map', {})
+
+    if item_id >= len(items):
+        return jsonify({"status": "fail", "error": "Invalid item ID"}), 400
+
+    status_map[str(item_id)] = "generating"
+    session['status_map'] = status_map
+
     item = items[item_id]
     prompt_key = request.form.get("prompt_key", "template")
     slug = create_slug(item)
@@ -64,19 +69,29 @@ def generate_item(item_id):
     try:
         resultUrl = publish_to_wordpress(content, slug)
         item["wordpress_url"] = resultUrl
-        status_map[item_id] = "success"
+        items[item_id] = item
+        session['items'] = items
+        status_map[str(item_id)] = "success"
+        session['status_map'] = status_map
         return jsonify({"status": "success", "url": resultUrl})
     except Exception as e:
-        status_map[item_id] = "fail"
+        status_map[str(item_id)] = "fail"
+        session['status_map'] = status_map
         return jsonify({"status": "fail", "error": str(e)})
 
 @app.route('/cancel-generation/<int:item_id>', methods=['POST'])
 def cancel_generation(item_id):
-    status_map[item_id] = "fail"
+    status_map = session.get('status_map', {})
+    status_map[str(item_id)] = "fail"
+    session['status_map'] = status_map
     return jsonify({"status": "cancelled"})
 
 @app.route('/item/<int:item_id>', methods=['POST'])
 def open_item(item_id):
+    items = session.get('items', [])
+    if item_id >= len(items):
+        return jsonify({"error": "Invalid item ID"}), 400
+
     item = items[item_id]
     resultUrl = item.get("wordpress_url")
     if not resultUrl:
