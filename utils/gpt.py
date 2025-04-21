@@ -7,7 +7,7 @@ if os.getenv("RAILWAY_ENV") is None:
     load_dotenv()
 
 def get_openai_client():
-    openai_key = "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"
+    openai_key = "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"
     # openai_key = os.environ.get("OPENAI_API_KEY")
 
     print(f"🔑 OpenAI Key: {openai_key}")
@@ -25,8 +25,10 @@ def generate_content(data, prompt_config, internal_links):
     proptSimilarObject = "**\"Here is an original JSON object and a prompt template.\nPlease:\nGenerate 5 new JSON objects where each has only one key different from the original (changing one of ville, quartier, metier, animal, specificite).\n\"**"
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": proptSimilarObject + str(data)}],
     )
+    similarObject = response.choices[0].message.content
+    sdfsd=0
 
     # Replace placeholders with actual data
     for key in data:
