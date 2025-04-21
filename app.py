@@ -21,6 +21,10 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
+    global base_url
+    base_url = request.host_url
+    print(base_url)
+
     if request.method == 'POST':
         file = request.files.get('file')
         if file and allowed_file(file.filename):
@@ -66,7 +70,7 @@ def generate_item(item_id):
 
     content, objects =  generate_content(item, prompt_config[prompt_key], internal_links)
     print("oooooooooooo", objects)
-    content = md_to_html(content, pro, city, objects)
+    content = md_to_html(content, pro, city, objects, base_url)
 
     try:
         resultUrl = publish_to_wordpress(content, slug)
@@ -107,6 +111,27 @@ def save_config():
     with open(config_path, "w", encoding='utf-8') as f:
         json.dump(prompt_config, f, ensure_ascii=False, indent=2)
     return jsonify({"success": True})
+
+@app.route('/generate-item', methods=['POST'])
+def generate_item_from_object():
+    data = request.get_json()
+    item = data.get("item")
+    if not item:
+        return jsonify({"status": "fail", "error": "No item provided"}), 400
+
+    prompt_key = item.get("prompt_key", "template")
+    slug = create_slug(item)
+    pro = item['ville']
+    city = item['metier']
+    internal_links = get_internal_links(item)
+
+    try:
+        content, objects = generate_content(item, prompt_config[prompt_key], internal_links)
+        content = md_to_html(content, pro, city, objects, base_url)
+        resultUrl = publish_to_wordpress(content, slug)
+        return jsonify({"status": "success", "url": resultUrl})
+    except Exception as e:
+        return jsonify({"status": "fail", "error": str(e)})
 
 # if __name__ == "__main__":
 #     # If in debug mode, run with Flask's built-in server

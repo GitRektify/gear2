@@ -15,7 +15,7 @@ city_lookup = {
     for entry in city_data
 }
 
-def md_to_html(md_content, city, pro, objects):
+def md_to_html(md_content, city, pro, objects, base_url):
     # If any object is a string (not a dict), convert the whole list
     if isinstance(objects[0], str):
         valid_objects = []
@@ -61,7 +61,7 @@ def md_to_html(md_content, city, pro, objects):
         label = format_text(obj, include_specific=(index < 2))
         json_obj = json.dumps(obj).replace('"', '&quot;')  # Escape for HTML
         print("HHHHHHHHHHHHHHHH", json_obj)
-        return f'<li><button onclick="generateAndOpen({json_obj})">🔗 {label}</button></li>'
+        return f'<li><button onclick="generateAndOpen({json_obj}, {base_url})">🔗 {label}</button></li>'
 
     buttons_html = '\n'.join([format_button(objects[i], i) for i in range(5)])
 
@@ -72,29 +72,27 @@ def md_to_html(md_content, city, pro, objects):
     return Markup(
         html_content +
         f"<h2>See also</h2>\n<ul>{buttons_html}</ul>"
-    ) + Markup('''
-    <script>
-        async function generateAndOpen(item) {
-            console.log("Sending item to server:", item);
-            try {
-                const generateRes = await fetch('/generate-item', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ item })
-                });
-
-                const genData = await generateRes.json();
-                if (genData.status !== 'success') {
-                    alert("Generation failed: " + (genData.error || "Unknown error"));
-                    return;
+    ) + Markup(
+        '''<script>
+            async function generateAndOpen(item, base_url) {
+                console.log('base_url');
+                try {
+                    const generateRes = await fetch(base_url + '/generate-item', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ item })
+                    });
+                    const genData = await generateRes.json();
+                    if (genData.status !== 'success') {
+                        alert("Generation failed: " + (genData.error || "Unknown error"));
+                        return;
+                    }
+                    window.open(genData.url, '_blank');
+                } catch (err) {
+                    console.error("Error:", err);
+                    alert("An error occurred.");
                 }
-
-                window.open(genData.url, '_blank');
-            } catch (err) {
-                console.error("Error:", err);
-                alert("An error occurred.");
             }
-        }
-    </script>
-    ''')
+        </script>'''
+    )
 
