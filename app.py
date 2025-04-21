@@ -25,6 +25,7 @@ def allowed_file(filename):
 def upload_file():
     global base_url
     base_url = request.url_root
+    base_url = base_url.replace("http", "https")
     print(base_url)
 
     if request.method == 'POST':
