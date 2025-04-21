@@ -130,7 +130,6 @@
         let kvStore = {{ prompt_config | tojson }};
         let originalKVStore = JSON.parse(JSON.stringify(kvStore));
         let selectedKey = null;
-
         function toggleSettings() {
             const panel = document.getElementById("settingsPanel");
             const overlay = document.getElementById("settingsOverlay");

@@ -1,87 +1,100 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
+# WordPress credentials
 username = 'Lorena'
 app_password = 'q0wK 7z7E eKjW vhMw E1e8 KVPd'
 site_url = 'https://planipets.com/blog'
 api_url = f"{site_url}/wp-json/wp/v2/pages"
 
-# ✅ Try to fetch by slug AND parent_id (with fallback to slug-only for debugging)
+# Get a page by slug and parent ID
 def get_page_by_slug_and_parent(slug, parent_id):
     slug = slug.strip().lower()
-    response = requests.get(
-        api_url,
-        params={"slug": slug, "parent": parent_id},
-        auth=HTTPBasicAuth(username, app_password)
-    )
+    # First try with parent ID
+    response = requests.get(api_url, params={"slug": slug, "parent": parent_id}, auth=HTTPBasicAuth(username, app_password))
     if response.status_code == 200 and response.json():
         return response.json()[0]
-    # 🐛 Fallback to just slug (debugging)
-    response = requests.get(
-        api_url,
-        params={"slug": slug},
-        auth=HTTPBasicAuth(username, app_password)
-    )
+    
+    # Fallback to slug-only (debug)
+    response = requests.get(api_url, params={"slug": slug}, auth=HTTPBasicAuth(username, app_password))
     if response.status_code == 200 and response.json():
-        print(f"⚠️ Page '{slug}' exists, but under a different parent ID: {response.json()[0]['parent']}")
+        print(f"⚠️ Found page '{slug}' but with different parent ID: {response.json()[0]['parent']}")
         return response.json()[0]
+    
     return None
-# ✅ Publish to WordPress
-def publish_to_wordpress(content, slug):
-    parent_path = slug.strip('/').split('/')[:-1]  # All but last
-    page_slug = slug.strip('/').split('/')[-1]     # Final leaf slug
-    parent_id = 0  # Start at root
-    created_parent_ids = {}  # Optional cache
 
-    # 🧱 Step 1: Re-use or create parent pages
+# Publish content to WordPress as a Page
+def publish_to_wordpress(content, slug, extra_data=None):
+    slug_parts = slug.strip('/').split('/')
+    page_slug = slug_parts[-1]
+    parent_path = slug_parts[:-1]
+    parent_id = 0
+
+    print(f"\n🚀 Publishing page: /{'/'.join(slug_parts)}")
+
+    # Create or reuse parent hierarchy
     for part in parent_path:
         existing_page = get_page_by_slug_and_parent(part, parent_id)
         if existing_page:
             parent_id = existing_page['id']
-            print(f"✅ Found existing parent: {part} (ID: {parent_id})")
+            print(f"✅ Found parent: {part} (ID: {parent_id})")
         else:
-            print(f"➕ Creating parent: {part}")
-            parent_data = {
+            print(f"➕ Creating parent page: {part}")
+            new_page_data = {
                 "title": part.replace('-', ' ').title(),
                 "slug": part,
                 "status": "publish",
                 "parent": parent_id
             }
-            res = requests.post(api_url, json=parent_data, auth=HTTPBasicAuth(username, app_password))
+            res = requests.post(api_url, json=new_page_data, auth=HTTPBasicAuth(username, app_password))
             if res.status_code == 201:
-                parent_id = res.json().get('id', 0)
+                parent_id = res.json().get('id')
             else:
-                print(f"❌ Failed to create parent '{part}': {res.text}")
-                return '/'
+                print(f"❌ Error creating parent '{part}':", res.text)
+                return None
 
-    # 🗑️ Step 2: Delete leaf page if it exists under final parent
+    # Delete existing leaf page if it exists
     existing_leaf = get_page_by_slug_and_parent(page_slug, parent_id)
     if existing_leaf:
         delete_url = f"{api_url}/{existing_leaf['id']}?force=true"
         del_res = requests.delete(delete_url, auth=HTTPBasicAuth(username, app_password))
         if del_res.status_code == 200:
-            print(f"🗑️ Deleted existing leaf page: {page_slug}")
+            print(f"🗑️ Deleted existing page: {page_slug}")
         else:
-            print(f"⚠️ Failed to delete existing page: {del_res.text}")
+            print(f"⚠️ Could not delete existing page: {del_res.text}")
 
-    # 📝 Step 3: Create new leaf page
+    # Inject WebPage schema
+    schema = f"""
+    <script type="application/ld+json">
+    {{
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "{page_slug.replace('-', ' ').title()}",
+      "url": "{site_url}/{slug.strip('/')}"
+    }}
+    </script>
+    """
+
+    # Final page content and data
     page_data = {
         "title": page_slug.replace('-', ' ').title(),
         "slug": page_slug,
-        "content": f"<style>.entry-title{{display:none !important}}</style>{content}",
+        "content": f"{schema}<style>.entry-title{{display:none !important}}</style>{content}",
         "status": "publish",
         "parent": parent_id
     }
 
-    response = requests.post(api_url, json=page_data, auth=HTTPBasicAuth(username, app_password))
+    # Optionally add more fields like template, author, etc.
+    if extra_data:
+        page_data.update(extra_data)
 
+    # Create the new page
+    response = requests.post(api_url, json=page_data, auth=HTTPBasicAuth(username, app_password))
     if response.status_code == 201:
-        link = response.json().get('link')
-        print("✅ Page published successfully!")
-        print("🔗 Page URL:", link)
-        return link
+        page_url = response.json().get('link')
+        print(f"✅ Page published: {page_url}")
+        return page_url
     else:
-        print("❌ Failed to publish page.")
-        print("Status Code:", response.status_code)
+        print(f"❌ Failed to publish page '{page_slug}': {response.status_code}")
         print("Response:", response.text)
-        return '/'
+        return None
