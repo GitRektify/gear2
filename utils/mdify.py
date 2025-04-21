@@ -61,7 +61,7 @@ def md_to_html(md_content, city, pro, objects, base_url):
         label = format_text(obj, include_specific=(index < 2))
         json_obj = json.dumps(obj).replace('"', '&quot;')  # Escape for HTML
         print("HHHHHHHHHHHHHHHH", json_obj)
-        return f'<li><button onclick="generateAndOpen({json_obj}, {base_url})">🔗 {label}</button></li>'
+        return f'<li><button onclick="generateAndOpen({json_obj}, '+f'{base_url})">🔗 {label}</button></li>'
 
     buttons_html = '\n'.join([format_button(objects[i], i) for i in range(5)])
 
@@ -75,23 +75,7 @@ def md_to_html(md_content, city, pro, objects, base_url):
     ) + Markup(
         '''<script>
             async function generateAndOpen(item, base_url) {
-                console.log('base_url');
-                try {
-                    const generateRes = await fetch(base_url + '/generate-item', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ item })
-                    });
-                    const genData = await generateRes.json();
-                    if (genData.status !== 'success') {
-                        alert("Generation failed: " + (genData.error || "Unknown error"));
-                        return;
-                    }
-                    window.open(genData.url, '_blank');
-                } catch (err) {
-                    console.error("Error:", err);
-                    alert("An error occurred.");
-                }
+                console.log(base_url);
             }
         </script>'''
     )
