@@ -10,7 +10,6 @@ if os.getenv("RAILWAY_ENV") is None:
 
 def get_openai_client():
     openai_key = os.getenv("OPENAI_API_KEY")
-    # openai_key = "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"
     if not openai_key:
         raise ValueError("OPENAI_API_KEY is not set.")
 
@@ -60,7 +59,6 @@ def getRelativeInfo(client, originJson):
     raw_data = response.choices[0].message.content
 
     similarStrings = re.findall(r'```json\s*(\{.*?\})\s*```', raw_data, re.DOTALL)
-    
     newObjects = []
     for js in similarStrings:
         obj = json.loads(js)
