@@ -16,19 +16,6 @@ city_lookup = {
 }
 
 def md_to_html(md_content, city, pro, objects, base_url):
-    # If any object is a string (not a dict), convert the whole list
-    if isinstance(objects[0], str):
-        valid_objects = []
-        for i, obj in enumerate(objects):
-            if obj.strip():
-                try:
-                    valid_objects.append(json.loads(obj))
-                except json.JSONDecodeError:
-                    print(f"Warning: Object at index {i} is not valid JSON:\n{obj}")
-            else:
-                print(f"Warning: Object at index {i} is empty.")
-        objects = valid_objects
-
     # Profession-to-verb mapping
     verb_map = {
         "toiletteur": "Réserver un",
@@ -48,7 +35,6 @@ def md_to_html(md_content, city, pro, objects, base_url):
     link_url = f"https://planipets.com/etablissements?name={pro}&address={city}%2C%20France&lat={lat}&lng={lng}"
     link_md = f"[{link_text}]({link_url})"
 
-    # Format button text
     def format_text(obj, include_specific=True):
         base = f"{obj['animal']} {obj['metier']}"
         if include_specific and obj.get("specificite"):
@@ -56,27 +42,43 @@ def md_to_html(md_content, city, pro, objects, base_url):
         base += f" in {obj['ville']} {obj['quartier']}"
         return base[0].upper() + base[1:]
 
-    # Generate raw HTML buttons
     def format_button(obj, index):
         label = format_text(obj, include_specific=(index < 2))
-        json_obj = json.dumps(obj).replace('"', '&quot;')  # Escape for HTML
-        print("HHHHHHHHHHHHHHHH", json_obj)
-        return f'<li><button onclick="generateAndOpen({json_obj}, '+f'{base_url})">🔗 {label}</button></li>'
+        json_data = json.dumps(obj).replace('"', '&quot;')  # Escape quotes for HTML attribute
+        return f'<li><button data-obj="{json_data}">🔗 {label}</button></li>'
 
-    buttons_html = '\n'.join([format_button(objects[i], i) for i in range(5)])
+    buttons_html = '\n'.join([format_button(objects[i], i) for i in range(min(5, len(objects)))])
 
-    # Markdown only for md_content and link
     html_content = markdown.markdown(md_content + f"\n\n{link_md}")
 
-    # Return combined HTML with raw HTML buttons and JS
     return Markup(
         html_content +
         f"<h2>See also</h2>\n<ul>{buttons_html}</ul>"
     ) + Markup(
-        '''<script>
-            async function generateAndOpen(item, base_url) {
-                console.log(base_url);
-            }
-        </script>'''
+        f'''
+        <script>
+            document.querySelectorAll('button[data-obj]').forEach(button => {{
+                button.addEventListener('click', async () => {{
+                    const item = JSON.parse(button.getAttribute('data-obj'));
+                    const base_url = "{base_url}";
+                    try {{
+                        const res = await fetch(base_url + '/generate-item', {{
+                            method: 'POST',
+                            headers: {{ 'Content-Type': 'application/json' }},
+                            body: JSON.stringify({{ item }})
+                        }});
+                        const data = await res.json();
+                        if (data.status !== 'success') {{
+                            alert("Generation failed: " + (data.error || "Unknown error"));
+                            return;
+                        }}
+                        window.open(data.url, '_blank');
+                    }} catch (err) {{
+                        console.error("Error:", err);
+                        alert("An error occurred.");
+                    }}
+                }});
+            }});
+        </script>
+        '''
     )
-
