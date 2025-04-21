@@ -9,7 +9,7 @@ if os.getenv("RAILWAY_ENV") is None:
     load_dotenv()
 
 def get_openai_client():
-    openai_key = "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"
+    openai_key = "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"
     # openai_key = os.environ.get("OPENAI_API_KEY")
 
     print(f"🔑 OpenAI Key: {openai_key}")
