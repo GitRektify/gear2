@@ -15,6 +15,7 @@ city_lookup = {
     for entry in city_data
 }
 
+
 def md_to_html(md_content, city, pro, objects, base_url):
     # Profession-to-verb mapping
     verb_map = {
@@ -35,33 +36,48 @@ def md_to_html(md_content, city, pro, objects, base_url):
     link_url = f"https://planipets.com/etablissements?name={pro}&address={city}%2C%20France&lat={lat}&lng={lng}"
     link_md = f"[{link_text}]({link_url})"
 
-    # def format_text(obj, include_specific=True):
-    #     base = f"{obj['animal']} {obj['metier']}"
-    #     if include_specific and obj.get("specificite"):
-    #         base += f" for {obj['specificite']} {obj['animal']}"
-    #     base += f" in {obj['ville']} {obj['quartier']}"
-    #     return base[0].upper() + base[1:]
-
     def format_text(obj, include_specific=True):
-    # Convert to dict if it's a JSON string
+        # Convert to dict if it's a JSON string
         if isinstance(obj, str):
             try:
                 obj = json.loads(obj)
             except json.JSONDecodeError:
                 raise ValueError("Invalid object format, expected a dictionary or JSON string.")
 
+        # Verify if it's a dictionary after decoding
+        if not isinstance(obj, dict):
+            raise ValueError(f"Invalid object format: Expected a dictionary, got {type(obj)}.")
+
         base = f"{obj['animal']} {obj['metier']}"
-        if include_specific and 'specificite' in obj and obj['specificite']:
+        if include_specific and obj.get("specificite"):
             base += f" spécialisé en {obj['specificite']}"
         return base
 
     def format_button(obj, index):
+        # Debug: Show type and value of each object for better tracking
+        print(f"DEBUG format_button - Index: {index}, Object: {obj}, Type: {type(obj)}")
+
+        # Sanitize input: Check if it's a dictionary or a string
+        if not isinstance(obj, (dict, str)):
+            raise ValueError(f"Invalid object type at index {index}: {type(obj)} — expected dict or JSON string.")
+
         label = format_text(obj, include_specific=(index < 2))
         json_data = json.dumps(obj).replace('"', '&quot;')  # Escape quotes for HTML attribute
         return f'<li><button data-obj="{json_data}">🔗 {label}</button></li>'
 
-    buttons_html = '\n'.join([format_button(objects[i], i) for i in range(min(5, len(objects)))])
+    # Filter out invalid entries in the `objects` list
+    filtered_objects = [o for o in objects if isinstance(o, (dict, str))]
 
+    # Debug: Show filtered objects
+    print(f"DEBUG filtered_objects: {filtered_objects}")
+
+    # Generate up to 5 buttons
+    buttons_html = '\n'.join([
+        format_button(filtered_objects[i], i)
+        for i in range(min(5, len(filtered_objects)))
+    ])
+
+    # Convert Markdown to HTML and inject link
     html_content = markdown.markdown(md_content + f"\n\n{link_md}")
 
     return Markup(
